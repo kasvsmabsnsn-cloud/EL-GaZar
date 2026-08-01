@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مطعم آل مسعد</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS Library for Scroll Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase Realtime Database compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ===== ROOT VARIABLES ===== */
+        :root {
+            --red-primary: #CC0000;
+            --red-light: #FFE5E5;
+            --red-dark: #8B0000;
+            --white: #FFFFFF;
+            --gray-light: #F8F8F8;
+            --shadow-red: rgba(204, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--white);
+            color: #1a1a1a;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        /* ===== LOADER / SPINNER ===== */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--white);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .loader-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 5px solid var(--red-light);
+            border-top: 5px solid var(--red-primary);
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            position: relative;
+        }
+
+        .loader-shadow {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(204,0,0,0.2) 0%, transparent 70%);
+            animation: shadowMove 2s ease-in-out infinite alternate;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            filter: blur(8px);
+        }
+
+        .loader-fish {
+            position: absolute;
+            font-size: 28px;
+            color: var(--red-primary);
+            animation: fishSwim 1.5s ease-in-out infinite alternate;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes shadowMove {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+        }
+
+        @keyframes fishSwim {
+            0% { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
+            100% { transform: translate(-50%, -50%) rotate(5deg) scale(1.1); }
+        }
+
+        .loader-text {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--red-primary);
+            text-align: center;
+            line-height: 1.8;
+            font-family: 'Cairo', sans-serif;
+            letter-spacing: 0.5px;
+            animation: pulseText 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.03); }
+        }
+
+        /* ===== CUSTOM SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--gray-light); }
+        ::-webkit-scrollbar-thumb { background: var(--red-primary); border-radius: 10px; }
+
+        /* ===== HEADER ===== */
+        .header-red {
+            background: var(--white);
+            box-shadow: 0 2px 20px var(--shadow-red);
+        }
+
+        .logo-red {
+            background: var(--red-primary);
+            color: var(--white);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-red {
+            background: var(--red-primary);
+            color: var(--white);
+            font-weight: 900;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow-red);
+        }
+        .btn-red:hover {
+            background: var(--red-dark);
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(204, 0, 0, 0.3);
+        }
+
+        /* ===== CARDS ===== */
+        .card-white {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 10px rgba(204, 0, 0, 0.08);
+            transition: all 0.4s ease;
+            border: 1px solid rgba(204, 0, 0, 0.06);
+        }
+        .card-white:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 50px rgba(204, 0, 0, 0.12), 0 4px 15px rgba(204, 0, 0, 0.06);
+        }
+
+        .card-white .card-title {
+            color: var(--red-primary);
+            font-weight: 900;
+            font-size: 1.1rem;
+        }
+
+        .card-white .card-price {
+            color: var(--red-primary);
+            font-weight: 900;
+            font-size: 1.3rem;
+        }
+
+        /* ===== RED THEME ELEMENTS ===== */
+        .bg-red-primary { background: var(--red-primary); }
+        .text-red-primary { color: var(--red-primary); }
+        .border-red-primary { border-color: var(--red-primary); }
+
+        .bg-red-light { background: var(--red-light); }
+
+        /* ===== HERO ===== */
+        .hero-red-gradient {
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFFFFF 50%, #FFEEEE 100%);
+        }
+
+        .hero-badge {
+            background: var(--red-light);
+            color: var(--red-primary);
+            font-weight: 900;
+        }
+
+        /* ===== CATEGORY BUTTONS ===== */
+        .cat-btn {
+            background: var(--white);
+            color: #555;
+            border: 2px solid #eee;
+            font-weight: 800;
+            transition: all 0.3s ease;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+        .cat-btn.active {
+            background: var(--red-primary);
+            color: var(--white);
+            border-color: var(--red-primary);
+            box-shadow: 0 4px 20px var(--shadow-red);
+            transform: scale(1.05);
+        }
+        .cat-btn:hover:not(.active) {
+            border-color: var(--red-primary);
+            color: var(--red-primary);
+        }
+
+        /* ===== CART DRAWER ===== */
+        .cart-drawer {
+            background: var(--white);
+            box-shadow: -10px 0 40px rgba(0,0,0,0.08);
+        }
+
+        /* ===== SIDEBAR DRAWER ===== */
+        .sidebar-drawer {
+            background: var(--white);
+            box-shadow: 10px 0 40px rgba(0,0,0,0.08);
+        }
+
+        /* ===== AOS CUSTOM OVERRIDES ===== */
+        [data-aos] {
+            pointer-events: none;
+        }
+        [data-aos].aos-animate {
+            pointer-events: auto;
+        }
+
+        /* ===== ACTIVE ORDER BANNER ===== */
+        .active-order-banner {
+            background: linear-gradient(135deg, #FFF5F5, #FFE5E5);
+            border-right: 6px solid var(--red-primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px rgba(204, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .active-order-banner:hover {
+            transform: scale(1.01);
+            box-shadow: 0 4px 20px rgba(204, 0, 0, 0.15);
+        }
+        .active-order-banner .status-text {
+            font-weight: 900;
+            color: var(--red-primary);
+        }
+        .active-order-banner .order-id {
+            font-weight: 700;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            .loader-text { font-size: 14px; }
+            .active-order-banner { padding: 10px 16px; flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================= -->
+    <!-- ===== LOADER ===== -->
+    <!-- ========================================= -->
+    <div id="loader">
+        <div class="loader-container">
+            <div class="loader-shadow"></div>
+            <div class="loader-ring"></div>
+            <div class="loader-fish">
+                <i class="fa-solid fa-fish"></i>
+            </div>
+        </div>
+        <div class="loader-text">
+            سبحان الله العظيم<br>
+            سبحان الله وبحمده
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- ===== HEADER (مع سلة وثلاث شرط) ===== -->
+    <!-- ========================================= -->
+    <header class="header-red sticky top-0 z-50 w-full">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- يمين: ثلاث شرط -->
+            <button onclick="toggleSidebar()" class="p-2 rounded-full hover:bg-red-50 transition-all">
+                <i class="fa-solid fa-bars text-2xl text-red-primary"></i>
+            </button>
+            
+            <!-- وسط: اسم المطعم فقط -->
+            <h1 class="text-xl font-black text-red-primary tracking-tight">مطعم آل مسعد</h1>
+
+            <!-- يسار: أيقونة السلة -->
+            <button onclick="toggleCart()" class="relative p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all border border-red-100">
+                <i class="fa-solid fa-basket-shopping text-xl text-red-primary"></i>
+                <span id="cart-badge-count" class="absolute -top-1 -right-1 bg-red-primary text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold hidden">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- ===== ACTIVE ORDER BANNER (يظهر عند وجود طلب نشط) ===== -->
+    <!-- ========================================= -->
+    <div id="active-order-banner-container" class="hidden container mx-auto px-4">
+        <div id="active-order-banner" class="active-order-banner" onclick="openTrackingFromBanner()">
+            <div>
+                <span class="order-id">#<span id="banner-order-id">---</span></span>
+                <span class="status-text" id="banner-status-text">جارٍ التحميل...</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-gray-600">اضغط لعرض التفاصيل</span>
+                <i class="fa-solid fa-chevron-left text-red-primary"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- ===== SIDEBAR DRAWER (ثلاث شرط) ===== -->
+    <!-- ========================================= -->
+    <div id="sidebar-drawer" class="sidebar-drawer fixed inset-y-0 right-0 w-full max-w-xs z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-red-100 flex justify-between items-center bg-red-light">
+            <span class="text-xl font-black text-red-primary">القائمة</span>
+            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-red-primary"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        <div class="flex-1 p-6 space-y-6 text-lg font-bold text-gray-700">
+            <a href="#menu-section" onclick="toggleSidebar()" class="block hover:text-red-primary transition-colors">
+                <i class="fa-solid fa-utensils ml-3 text-red-primary"></i> قائمة الطعام
+            </a>
+            <a href="#about-section" onclick="toggleSidebar()" class="block hover:text-red-primary transition-colors">
+                <i class="fa-solid fa-phone ml-3 text-red-primary"></i> تواصل معنا
+            </a>
+            <a href="#" onclick="alert('يمكنك إرسال مشكلتك على الرقم 01202763155'); toggleSidebar();" class="block hover:text-red-primary transition-colors">
+                <i class="fa-solid fa-flag ml-3 text-red-primary"></i> إبلاغ عن مشكلة
+            </a>
+        </div>
+        <div class="p-4 border-t border-gray-100 text-xs text-gray-400 text-center">
+            مطعم آل مسعد © 2026
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- ===== HERO SECTION (بدون زخارف) ===== -->
+    <!-- ========================================= -->
+    <section id="hero" class="hero-red-gradient min-h-[75vh] flex items-center justify-center relative overflow-hidden px-4">
+        <div class="container mx-auto text-center relative z-10 max-w-3xl">
+            <!-- Badge -->
+            <div data-aos="fade-down" data-aos-duration="800">
+                <span class="hero-badge inline-block px-5 py-2 rounded-full text-sm shadow-md mb-6">
+                    <i class="fa-solid fa-fire ml-1"></i> طازج يومياً
+                </span>
+            </div>
+            
+            <!-- Heading -->
+            <div data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
+                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                    مطعم 
+                    <span class="text-red-primary">آل مسعد</span>
+                </h1>
+            </div>
+            
+            <!-- وصف بسيط وهاديء -->
+            <div data-aos="fade-left" data-aos-duration="900" data-aos-delay="200">
+                <p class="text-gray-600 md:text-lg mb-8 font-medium leading-relaxed">
+                    أفضل المأكولات والمشويات الطازجة يومياً
+                </p>
+            </div>
+            
+            <!-- أزرار -->
+            <div data-aos="fade-right" data-aos-duration="900" data-aos-delay="300" class="flex flex-wrap justify-center gap-4">
+                <a href="#menu-section" class="btn-red px-8 py-3.5 rounded-full shadow-lg inline-block">اطلب الآن</a>
+                <a href="tel:01202763155" class="bg-white border-2 border-red-primary text-red-primary px-8 py-3.5 rounded-full font-bold hover:bg-red-50 transition-colors">اتصل بنا</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================= -->
+    <!-- ===== MENU SECTION ===== -->
+    <!-- ========================================= -->
+    <main id="menu-section" class="container mx-auto px-4 py-12">
+
+        <div class="text-center mb-12" data-aos="fade-up" data-aos-duration="600">
+            <h2 class="text-3xl font-black text-red-primary mb-2">قائمة المأكولات الفاخرة</h2>
+            <p class="text-gray-500 font-medium">اطلب ما تشتهيه من أقسامنا المتنوعة</p>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="bg-white rounded-3xl p-4 mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between shadow-lg border border-red-100" data-aos="fade-up" data-aos-duration="700">
+            <div class="relative flex-1 max-w-md">
+                <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
+                <input type="text" id="search-input" oninput="filterProducts()" placeholder="ابحث عن وجبتك المفضلة..." class="w-full pl-4 pr-12 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-primary bg-white/80 font-medium transition-all">
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-gray-500 whitespace-nowrap"><i class="fa-solid fa-sliders ml-1"></i> ترتيب:</span>
+                <select id="sort-select" onchange="filterProducts()" class="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-primary">
+                    <option value="default">الافتراضي</option>
+                    <option value="price-asc">السعر: من الأقل</option>
+                    <option value="price-desc">السعر: من الأعلى</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div id="categories-container" class="flex gap-3 overflow-x-auto pb-4 mb-8 scroll-smooth no-scrollbar" data-aos="fade-up" data-aos-duration="600">
+            <!-- dynamic -->
+        </div>
+
+        <!-- Products Grid -->
+        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- dynamic -->
+        </div>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- ===== FOOTER ===== -->
+    <!-- ========================================= -->
+    <footer id="about-section" class="bg-red-primary text-white pt-12 pb-6 mt-12">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm font-bold">
+            <div data-aos="fade-up" data-aos-duration="600">
+                <h4 class="text-white text-lg font-black mb-3">مطعم آل مسعد</h4>
+                <p class="leading-relaxed text-xs text-white/80">أفخم مطعم مشويات وصواني عائلية في الفيوم واطسا، نضمن تقديم لحوم طازجة 100%</p>
+            </div>
+            <div data-aos="fade-up" data-aos-duration="600" data-aos-delay="100">
+                <h4 class="text-white text-lg font-black mb-3"><i class="fa-solid fa-map-location-dot ml-1"></i> فروعنا</h4>
+                <p class="text-xs text-white/80">الفيوم - إطسا - تطون</p>
+                <p class="text-xs text-white/80 mt-1">بجوار مسجد الشهيد مدحت</p>
+            </div>
+            <div data-aos="fade-up" data-aos-duration="600" data-aos-delay="200">
+                <h4 class="text-white text-lg font-black mb-3"><i class="fa-solid fa-phone-volume ml-1"></i> للطلب</h4>
+                <ul class="space-y-1 text-xs text-white/90">
+                    <li>01202763155</li>
+                    <li>null</li>
+                    <li>null</li>
+                </ul>
+            </div>
+        </div>
+        <div class="text-center text-xs text-white/40 mt-8 pt-4 border-t border-white/10">جميع الحقوق محفوظة © 2026</div>
+    </footer>
+
+    <!-- ========================================= -->
+    <!-- ===== CART DRAWER ===== -->
+    <!-- ========================================= -->
+    <div id="cart-drawer" class="cart-drawer fixed inset-y-0 left-0 w-full max-w-md z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-red-100 flex justify-between items-center bg-red-light">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-basket-shopping text-red-primary text-xl"></i>
+                <h3 class="text-xl font-black text-red-primary">سلة المشتريات</h3>
+            </div>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-red-primary"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div class="text-center py-12 text-gray-400"><i class="fa-solid fa-face-dashed text-4xl mb-3 block"></i>السلة فارغة</div>
+        </div>
+        <div class="p-6 border-t border-gray-100 bg-gray-50 space-y-3 font-bold text-sm">
+            <div class="flex justify-between text-gray-500"><span>الإجمالي:</span><span id="summary-subtotal">0 جنيه</span></div>
+            <div class="flex justify-between text-gray-500"><span>التوصيل:</span><span id="summary-shipping">30 جنيه</span></div>
+            <!-- خصم وهمي 10% -->
+            <div id="fake-discount-row" class="flex justify-between text-green-600 hidden">
+                <span>خصم وهمي 10%</span>
+                <span id="fake-discount-amount">0 جنيه</span>
+            </div>
+            <div class="flex justify-between text-lg font-black text-red-primary border-t border-gray-200 pt-3"><span>المجموع الكلي:</span><span id="summary-total">0 جنيه</span></div>
+            <!-- زر الخصم الوهمي -->
+            <div class="flex items-center gap-3 mt-2">
+                <button onclick="applyFakeDiscount()" class="text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-bold hover:bg-yellow-200 transition">
+                    <i class="fa-solid fa-tag ml-1"></i> خصم 10%
+                </button>
+                <span id="fake-discount-badge" class="text-xs text-green-600 font-bold hidden">خصم وهمي مفعّل</span>
+            </div>
+            <button onclick="openCheckoutStep()" class="btn-red w-full py-3.5 rounded-2xl text-center shadow-lg mt-2">إتمام الطلب</button>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- ===== ORDER MODAL (checkout) ===== -->
+    <!-- ========================================= -->
+    <div id="order-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="p-6 border-b border-red-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h3 id="modal-title" class="text-xl font-black text-red-primary">تأكيد طلبك</h3>
+                <button onclick="closeOrderModal()" class="text-gray-400 hover:text-red-primary"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <!-- Step 1: Client Data -->
+            <div id="step-client-data" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">الاسم الكامل *</label>
+                    <input type="text" id="cust-name" placeholder="اسمك الكريم" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-primary focus:outline-none font-medium">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">رقم الهاتف *</label>
+                    <input type="tel" id="cust-phone" placeholder="رقم التواصل" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-primary focus:outline-none font-medium">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">العنوان *</label>
+                    <div class="flex gap-2">
+                        <textarea id="cust-address-manual" rows="2" placeholder="اكتب عنوانك أو استخدم GPS" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-primary focus:outline-none font-medium text-sm"></textarea>
+                        <button onclick="getLocationAndFillAddress()" type="button" class="bg-red-primary text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-red-dark transition">
+                            <i class="fa-solid fa-location-dot ml-1"></i> GPS
+                        </button>
+                    </div>
+                    <input type="hidden" id="cust-location-link" value="">
+                    <input type="hidden" id="cust-lat" value="">
+                    <input type="hidden" id="cust-lng" value="">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ملاحظات (اختياري)</label>
+                    <input type="text" id="cust-notes" placeholder="بدون شطة، زيادة طحينة..." class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-primary focus:outline-none font-medium text-sm">
+                </div>
+                <button onclick="goToReviewStep()" class="btn-red w-full py-3.5 rounded-2xl shadow-lg mt-2">مراجعة الفاتورة</button>
+            </div>
+
+            <!-- Step 2: Review -->
+            <div id="step-review-order" class="p-6 space-y-4 hidden">
+                <div class="bg-red-light rounded-2xl p-4 border border-red-100 text-xs font-bold space-y-2">
+                    <p class="text-sm font-black text-red-primary mb-2 border-b border-red-200 pb-1">بيانات التوصيل</p>
+                    <p class="text-gray-600">الاسم: <span id="rev-name" class="text-gray-900"></span></p>
+                    <p class="text-gray-600">الهاتف: <span id="rev-phone" class="text-gray-900"></span></p>
+                    <p class="text-gray-600">العنوان: <span id="rev-address" class="text-gray-900"></span></p>
+                    <p class="text-gray-600">رابط الموقع: <span id="rev-location-link" class="text-gray-900 text-xs break-all"></span></p>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm font-black text-red-primary mb-2">الأصناف</p>
+                    <div id="rev-items-list" class="max-h-40 overflow-y-auto space-y-2"></div>
+                </div>
+                <div class="border-t border-red-100 pt-3 text-sm font-black">
+                    <div class="flex justify-between text-xs text-gray-500"><span>الإجمالي:</span><span id="rev-subtotal">0 جنيه</span></div>
+                    <div class="flex justify-between text-xs text-gray-500"><span>التوصيل:</span><span>30 جنيه</span></div>
+                    <div id="rev-fake-discount-row" class="flex justify-between text-xs text-green-600 hidden"><span>خصم وهمي 10%</span><span id="rev-fake-discount-amount">0 جنيه</span></div>
+                    <div class="flex justify-between text-base text-red-primary pt-1 border-t border-dashed border-gray-200"><span>المطلوب:</span><span id="rev-total">0 جنيه</span></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="backToClientData()" class="bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold hover:bg-gray-200">تعديل</button>
+                    <button id="submit-order-final-btn" onclick="submitOrderToFirebase()" class="btn-red py-3 rounded-2xl shadow-lg">تأكيد الإرسال</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Tracking -->
+            <div id="step-tracking-order" class="p-6 space-y-6 hidden text-center">
+                <div class="w-20 h-20 bg-red-light rounded-full flex items-center justify-center text-red-primary text-4xl mx-auto border-2 border-red-primary animate-bounce">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <h4 class="text-xl font-black text-red-primary">تم استلام طلبك!</h4>
+                    <p class="text-xs text-gray-400 font-bold">كود الطلب: <span id="track-order-id" class="text-gray-700 select-all"></span></p>
+                </div>
+                <div class="space-y-4 max-w-xs mx-auto text-right font-bold text-sm relative before:absolute before:top-2 before:bottom-2 before:right-2.5 before:w-0.5 before:bg-gray-200">
+                    <div id="status-step-0" class="relative pr-8 text-gray-400"><div class="absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white"></div>تم الاستلام</div>
+                    <div id="status-step-1" class="relative pr-8 text-gray-400"><div class="absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white"></div>جار التحضير</div>
+                    <div id="status-step-2" class="relative pr-8 text-gray-400"><div class="absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white"></div>جار التغليف</div>
+                    <div id="status-step-3" class="relative pr-8 text-gray-400"><div class="absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white"></div>خرج مع المندوب</div>
+                    <div id="status-step-4" class="relative pr-8 text-gray-400"><div class="absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white"></div>قريب من الوصول</div>
+                    <div id="status-step-5" class="relative pr-8 text-gray-400"><div class="absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white"></div>تم التسليم</div>
+                </div>
+                <!-- NEW: زر إلغاء الطلب -->
+                <button onclick="cancelOrder()" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm w-full mt-2">
+                    <i class="fa-solid fa-ban ml-1"></i> إلغاء الطلب
+                </button>
+                <button onclick="closeOrderModal();" class="bg-gray-900 text-white py-3 rounded-xl font-bold text-sm w-full">العودة للمنيو</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- ===== SCRIPTS ===== -->
+    <!-- ========================================= -->
+
+    <!-- AOS Library -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- Firebase Realtime Database -->
+    <script>
+        // ============================================================
+        // Firebase Configuration (Realtime Database)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4n627jxgPjoQn7icO9OP9C3ImcAbLEME",
+            authDomain: "private-d338e.firebaseapp.com",
+            databaseURL: "https://private-d338e-default-rtdb.firebaseio.com",
+            projectId: "private-d338e",
+            storageBucket: "private-d338e.firebasestorage.app",
+            messagingSenderId: "514393440915",
+            appId: "1:514393440915:web:b72e886e866f45ab948366"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let products = [];
+        let cart = [];
+        let activeCategory = "الكل";
+        let activeTrackingOrderId = null;
+        let fakeDiscountActive = false;
+        let activeOrderListener = null; // للاستماع إلى الطلب النشط
+
+        // ===== FALLBACK MENU (يستخدم في حالة عدم وجود بيانات) =====
+// ===== المنيو الكامل (83 صنفاً) =====
+// ===== المنيو الكامل (83 صنفاً) =====
+const fallbackMenu = [
+    // 1. مشويات الجزار
+    { id: "m1", name: "كباب (بالكيلو)", price: 950, category: "مشويات الجزار", isBestSeller: true, desc: "كباب بلدي فاخر", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop" },
+    { id: "m2", name: "ريش", price: 1100, category: "مشويات الجزار", isBestSeller: true, desc: "ريش ضأن طازج", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop" },
+    { id: "m3", name: "طرب", price: 850, category: "مشويات الجزار", isBestSeller: false, desc: "طرب مشوي على الفحم", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop" },
+    { id: "m4", name: "كفتة الجزار", price: 750, category: "مشويات الجزار", isBestSeller: false, desc: "كفتة لحم بقري", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=300&h=200&fit=crop" },
+    { id: "m5", name: "سجق شرقي", price: 400, category: "مشويات الجزار", isBestSeller: false, desc: "سجق بلدي", image: "https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=300&h=200&fit=crop" },
+    { id: "m6", name: "مشكل الجزار", price: 900, category: "مشويات الجزار", isBestSeller: false, desc: "تشكيلة مشويات الجزار", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&h=200&fit=crop" },
+    { id: "m7", name: "مكس جريل", price: 370, category: "مشويات الجزار", isBestSeller: false, desc: "كفتة - كباب - شيش", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop" },
+
+    // 2. بروست الجزار
+    { id: "b1", name: "وجبة الجزار (2ق)", price: 125, category: "بروست الجزار", isBestSeller: false, desc: "قطعتان من البروست", image: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=200&fit=crop" },
+    { id: "b2", name: "وجبة سنجل (1ق)", price: 75, category: "بروست الجزار", isBestSeller: false, desc: "قطعة بروست", image: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=200&fit=crop" },
+    { id: "b3", name: "وجبة تربل (3ق)", price: 185, category: "بروست الجزار", isBestSeller: false, desc: "ثلاث قطع بروست", image: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=200&fit=crop" },
+    { id: "b4", name: "وجبة سوبر (4ق)", price: 250, category: "بروست الجزار", isBestSeller: false, desc: "أربع قطع بروست", image: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=200&fit=crop" },
+    { id: "b5", name: "وجبة التوفير (8ق)", price: 470, category: "بروست الجزار", isBestSeller: true, desc: "ثماني قطع بروست", image: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=200&fit=crop" },
+
+    // 3. مشويات فراخ
+    { id: "ch1", name: "فرخة مشوية", price: 390, category: "مشويات فراخ", isBestSeller: true, desc: "فرخة كاملة مشوية", image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=300&h=200&fit=crop" },
+    { id: "ch2", name: "فرخة ناشف", price: 380, category: "مشويات فراخ", isBestSeller: false, desc: "فرخة مشوية ناشفة", image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=300&h=200&fit=crop" },
+    { id: "ch3", name: "فرخة استربس", price: 380, category: "مشويات فراخ", isBestSeller: false, desc: "أستربس دجاج", image: "https://images.unsplash.com/photo-1562967914-608f82629710?w=300&h=200&fit=crop" },
+    { id: "ch4", name: "شواية", price: 450, category: "مشويات فراخ", isBestSeller: false, desc: "شواية دجاج", image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=300&h=200&fit=crop" },
+    { id: "ch5", name: "مسبح", price: 450, category: "مشويات فراخ", isBestSeller: false, desc: "مسبح دجاج", image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=300&h=200&fit=crop" },
+
+    // 4. ساندوتشات الجزار
+    { id: "s1", name: "كبدة", price: 30, category: "ساندوتشات الجزار", isBestSeller: false, desc: "ساندوتش كبدة", image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=300&h=200&fit=crop" },
+    { id: "s2", name: "طرب", price: 65, category: "ساندوتشات الجزار", isBestSeller: false, desc: "ساندوتش طرب", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop" },
+    { id: "s3", name: "كفتة", price: 60, category: "ساندوتشات الجزار", isBestSeller: false, desc: "ساندوتش كفتة", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=300&h=200&fit=crop" },
+    { id: "s4", name: "بانية", price: 50, category: "ساندوتشات الجزار", isBestSeller: false, desc: "ساندوتش بانية", image: "https://images.unsplash.com/photo-1562967914-608f82629710?w=300&h=200&fit=crop" },
+
+    // 5. شاورما الجزار
+    { id: "sh1", name: "ساندوتش شاورما صاج", price: 65, category: "شاورما الجزار", isBestSeller: false, desc: "شاورما صاج", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "sh2", name: "ساندوتش شاورما صاج عروغ", price: 80, category: "شاورما الجزار", isBestSeller: false, desc: "شاورما صاج عروغ", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "sh3", name: "ساندوتش شاورما صاج اكسترا موتوريل", price: 85, category: "شاورما الجزار", isBestSeller: false, desc: "شاورما صاج موتوريل", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "sh4", name: "وجبة شاورما عربي سنجل", price: 105, category: "شاورما الجزار", isBestSeller: false, desc: "وجبة عربي سنجل", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "sh5", name: "وجبة شاورما عربي دبل", price: 180, category: "شاورما الجزار", isBestSeller: false, desc: "وجبة عربي دبل", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "sh6", name: "وجبة كساديا", price: 130, category: "شاورما الجزار", isBestSeller: false, desc: "كساديا شاورما", image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=300&h=200&fit=crop" },
+    { id: "sh7", name: "فتة شاورما", price: 135, category: "شاورما الجزار", isBestSeller: true, desc: "فتة شاورما", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+    { id: "sh8", name: "عرض: 2 شاورما + بطاطس", price: 150, category: "شاورما الجزار", isBestSeller: false, desc: "عرض خاص", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+
+    // 6. كريب الجزار
+    { id: "cr1", name: "بانيه", price: 75, category: "كريب الجزار", isBestSeller: false, desc: "كريب بانيه", image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop" },
+    { id: "cr2", name: "زنجر", price: 85, category: "كريب الجزار", isBestSeller: false, desc: "كريب زنجر", image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop" },
+    { id: "cr3", name: "شاورما", price: 95, category: "كريب الجزار", isBestSeller: false, desc: "كريب شاورما", image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop" },
+    { id: "cr4", name: "كفتة", price: 117, category: "كريب الجزار", isBestSeller: false, desc: "كريب كفتة", image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop" },
+    { id: "cr5", name: "بطاطس", price: 60, category: "كريب الجزار", isBestSeller: false, desc: "كريب بطاطس", image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop" },
+
+    // 7. طواجن الجزار
+    { id: "t1", name: "الجزار", price: 230, category: "طواجن الجزار", isBestSeller: false, desc: "طاجن الجزار", image: "https://images.unsplash.com/photo-1545247389-d29a1f3493e8?w=300&h=200&fit=crop" },
+    { id: "t2", name: "الكواري", price: 230, category: "طواجن الجزار", isBestSeller: false, desc: "طاجن كوارع", image: "https://images.unsplash.com/photo-1545247389-d29a1f3493e8?w=300&h=200&fit=crop" },
+    { id: "t3", name: "عكاوي", price: 230, category: "طواجن الجزار", isBestSeller: false, desc: "طاجن عكاوي", image: "https://images.unsplash.com/photo-1545247389-d29a1f3493e8?w=300&h=200&fit=crop" },
+    { id: "t4", name: "خضار باللحمة", price: 220, category: "طواجن الجزار", isBestSeller: false, desc: "طاجن خضار بلحم", image: "https://images.unsplash.com/photo-1545247389-d29a1f3493e8?w=300&h=200&fit=crop" },
+    { id: "t5", name: "خضار سادة", price: 40, category: "طواجن الجزار", isBestSeller: false, desc: "طاجن خضار سادة", image: "https://images.unsplash.com/photo-1545247389-d29a1f3493e8?w=300&h=200&fit=crop" },
+    { id: "t6", name: "ملوخية", price: 45, category: "طواجن الجزار", isBestSeller: false, desc: "طاجن ملوخية", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop" },
+
+    // 8. الحواوشي
+    { id: "h1", name: "حواوشي كبير", price: 80, category: "الحواوشي", isBestSeller: false, desc: "حواوشي كبير", image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=300&h=200&fit=crop" },
+    { id: "h2", name: "حواوشي صغير", price: 55, category: "الحواوشي", isBestSeller: false, desc: "حواوشي صغير", image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=300&h=200&fit=crop" },
+
+    // 9. الحمام
+    { id: "hm1", name: "فرد حمام محشي رز", price: 140, category: "الحمام", isBestSeller: false, desc: "حمام محشي", image: "https://images.unsplash.com/photo-1514944298352-f4d7341fc644?w=300&h=200&fit=crop" },
+
+    // 10. لحم الراس
+    { id: "r1", name: "لحمة راس صافي", price: 170, category: "لحم الراس", isBestSeller: false, desc: "لحم راس صافي", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=300&h=200&fit=crop" },
+    { id: "r2", name: "مشكل (لحم راس)", price: 135, category: "لحم الراس", isBestSeller: false, desc: "مشكل راس", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=300&h=200&fit=crop" },
+    { id: "r3", name: "ميكس الجزار", price: 250, category: "لحم الراس", isBestSeller: false, desc: "ميكس راس", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=300&h=200&fit=crop" },
+    { id: "r4", name: "طبق كوارع", price: 110, category: "لحم الراس", isBestSeller: false, desc: "كوارع", image: "https://images.unsplash.com/photo-1545247389-d29a1f3493e8?w=300&h=200&fit=crop" },
+    { id: "r5", name: "ساندوتش لحمة راس صافي", price: 70, category: "لحم الراس", isBestSeller: false, desc: "ساندوتش راس صافي", image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=300&h=200&fit=crop" },
+    { id: "r6", name: "ساندوتش مشكل", price: 50, category: "لحم الراس", isBestSeller: false, desc: "ساندوتش مشكل", image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=300&h=200&fit=crop" },
+
+    // 11. مطبخ الجزار
+    { id: "k1", name: "رز ابيض", price: 40, category: "مطبخ الجزار", isBestSeller: false, desc: "رز أبيض", image: "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=300&h=200&fit=crop" },
+    { id: "k2", name: "رز بسمتي", price: 40, category: "مطبخ الجزار", isBestSeller: false, desc: "رز بسمتي", image: "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=300&h=200&fit=crop" },
+    { id: "k3", name: "مكرونة فرن", price: 95, category: "مطبخ الجزار", isBestSeller: false, desc: "مكرونة فرن", image: "https://images.unsplash.com/photo-1621996346565-e3d5d6281298?w=300&h=200&fit=crop" },
+    { id: "k4", name: "نجرسكو", price: 110, category: "مطبخ الجزار", isBestSeller: false, desc: "نجرسكو", image: "https://images.unsplash.com/photo-1621996346565-e3d5d6281298?w=300&h=200&fit=crop" },
+    { id: "k5", name: "تومية", price: 20, category: "مطبخ الجزار", isBestSeller: false, desc: "صوص تومية", image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&h=200&fit=crop" },
+    { id: "k6", name: "سلطة خضراء", price: 15, category: "مطبخ الجزار", isBestSeller: false, desc: "سلطة خضراء", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&h=200&fit=crop" },
+    { id: "k7", name: "سمبوسة", price: 15, category: "مطبخ الجزار", isBestSeller: false, desc: "سمبوسة", image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300&h=200&fit=crop" },
+    { id: "k8", name: "سلطة طحينة", price: 25, category: "مطبخ الجزار", isBestSeller: false, desc: "سلطة طحينة", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+    { id: "k9", name: "بابا غنوج", price: 20, category: "مطبخ الجزار", isBestSeller: false, desc: "بابا غنوج", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+    { id: "k10", name: "باكت بطاطس", price: 25, category: "مطبخ الجزار", isBestSeller: false, desc: "بطاطس مقلية", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=300&h=200&fit=crop" },
+
+    // 12. السلطات
+    { id: "sa1", name: "طحينة", price: 10, category: "السلطات", isBestSeller: false, desc: "طحينة", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+    { id: "sa2", name: "تومية", price: 10, category: "السلطات", isBestSeller: false, desc: "تومية", image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&h=200&fit=crop" },
+    { id: "sa3", name: "مخلل", price: 10, category: "السلطات", isBestSeller: false, desc: "مخلل", image: "https://images.unsplash.com/photo-1563583723377-1729b1be6b5a?w=300&h=200&fit=crop" },
+    { id: "sa4", name: "خضراء", price: 10, category: "السلطات", isBestSeller: false, desc: "سلطة خضراء", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&h=200&fit=crop" },
+    { id: "sa5", name: "صوص حار", price: 10, category: "السلطات", isBestSeller: false, desc: "صوص حار", image: "https://images.unsplash.com/photo-1583204091599-41e98d95e26b?w=300&h=200&fit=crop" },
+
+    // 13. المشروبات
+    { id: "dr1", name: "مياه معدنية", price: 8, category: "المشروبات", isBestSeller: false, desc: "مياه معدنية", image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=300&h=200&fit=crop" },
+    { id: "dr2", name: "بيبسي/كولا", price: 20, category: "المشروبات", isBestSeller: false, desc: "بيبسي أو كولا", image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&h=200&fit=crop" },
+
+    // 14. موائد الجزار (صواني)
+    { id: "pl1", name: "صينية المسعد", price: 3300, category: "موائد الجزار (صواني)", isBestSeller: true, desc: "صينية عائلية فاخرة", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&h=200&fit=crop" },
+    { id: "pl2", name: "صينية لمة الجزار", price: 4400, category: "موائد الجزار (صواني)", isBestSeller: true, desc: "صينية لمة الجزار الكبيرة", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&h=200&fit=crop" },
+    { id: "pl3", name: "صينية أسرة الجزار", price: 1100, category: "موائد الجزار (صواني)", isBestSeller: false, desc: "صينية أسرة 4 أفراد", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&h=200&fit=crop" },
+
+    // 15. مكسات
+    { id: "mx1", name: "مكس حمام", price: 350, category: "مكسات", isBestSeller: false, desc: "حمام + كفتة + سجق", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop" },
+    { id: "mx2", name: "مكس كباب", price: 320, category: "مكسات", isBestSeller: false, desc: "كباب + كفتة + سجق", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop" },
+    { id: "mx3", name: "مكس كبدة", price: 330, category: "مكسات", isBestSeller: false, desc: "كبدة + ممبار + سجق", image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=300&h=200&fit=crop" },
+    { id: "mx4", name: "مكس طرب", price: 320, category: "مكسات", isBestSeller: false, desc: "طرب + كفتة + سجق", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop" },
+    { id: "mx5", name: "مكس شيش وكفتة", price: 250, category: "مكسات", isBestSeller: false, desc: "شيش + كفتة", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=300&h=200&fit=crop" },
+    { id: "mx6", name: "مكس بروست", price: 180, category: "مكسات", isBestSeller: false, desc: "بروست + استربس + زنجر", image: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300&h=200&fit=crop" },
+
+    // 16. البرجر ساندوتش
+    { id: "bg1", name: "كلاسيك", price: 110, category: "البرجر ساندوتش", isBestSeller: false, desc: "برجر كلاسيك", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop" },
+    { id: "bg2", name: "دبل", price: 185, category: "البرجر ساندوتش", isBestSeller: false, desc: "برجر دبل", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop" },
+
+    // 17. البطاطس السوري
+    { id: "po1", name: "بطاطس سوري سادة", price: 35, category: "البطاطس السوري", isBestSeller: false, desc: "بطاطس سوري", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=300&h=200&fit=crop" },
+    { id: "po2", name: "بطاطس سوري موتزريلا", price: 40, category: "البطاطس السوري", isBestSeller: false, desc: "بطاطس سوري بموتزريلا", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=300&h=200&fit=crop" },
+
+    // 18. وجبات الكيدز
+    { id: "k1", name: "استربس (كيدز)", price: 85, category: "وجبات الكيدز", isBestSeller: false, desc: "استربس دجاج للأطفال", image: "https://images.unsplash.com/photo-1562967914-608f82629710?w=300&h=200&fit=crop" },
+    { id: "k2", name: "ريزو (كيدز)", price: 75, category: "وجبات الكيدز", isBestSeller: false, desc: "ريزو دجاج", image: "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=300&h=200&fit=crop" },
+
+    // 19. الفتة
+    { id: "f1", name: "فتة شاورما فراخ", price: 135, category: "الفتة", isBestSeller: false, desc: "فتة شاورما فراخ", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+    { id: "f2", name: "فتة كرسبي", price: 110, category: "الفتة", isBestSeller: false, desc: "فتة كرسبي", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+    { id: "f3", name: "فتة زنجر", price: 115, category: "الفتة", isBestSeller: false, desc: "فتة زنجر", image: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=300&h=200&fit=crop" },
+
+    // 20. الوجبات العربي
+    { id: "ar1", name: "عربي", price: 135, category: "الوجبات العربي", isBestSeller: false, desc: "وجبة عربي", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "ar2", name: "عربي دبل", price: 170, category: "الوجبات العربي", isBestSeller: false, desc: "وجبة عربي دبل", image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop" },
+    { id: "ar3", name: "كساديا", price: 140, category: "الوجبات العربي", isBestSeller: false, desc: "كساديا عربي", image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=300&h=200&fit=crop" }
+];
+
+        // ============================================================
+        // ACTIVE ORDER MANAGEMENT (NEW)
+        // ============================================================
+        function saveActiveOrder(orderId, phone) {
+            localStorage.setItem('activeOrderId', orderId);
+            localStorage.setItem('activeOrderPhone', phone);
+        }
+
+        function clearActiveOrder() {
+            localStorage.removeItem('activeOrderId');
+            localStorage.removeItem('activeOrderPhone');
+            if (activeOrderListener) {
+                activeOrderListener(); // إلغاء الاستماع
+                activeOrderListener = null;
+            }
+            document.getElementById('active-order-banner-container').classList.add('hidden');
+            activeTrackingOrderId = null;
+        }
+
+        function getActiveOrder() {
+            const id = localStorage.getItem('activeOrderId');
+            const phone = localStorage.getItem('activeOrderPhone');
+            if (id && phone) return { id, phone };
+            return null;
+        }
+
+        // عرض البانر الخاص بالطلب النشط
+        function showActiveOrderBanner(orderId, status) {
+            const container = document.getElementById('active-order-banner-container');
+            container.classList.remove('hidden');
+            document.getElementById('banner-order-id').textContent = orderId;
+            const statusText = ['مستلم', 'جاري التحضير', 'جاري التغليف', 'خرج للتوصيل', 'قريب من الوصول', 'تم التسليم'][status] || 'مستلم';
+            document.getElementById('banner-status-text').textContent = '• ' + statusText;
+        }
+
+        // تحديث البانر عند تغير الحالة
+        function updateActiveOrderBanner(status) {
+            const statusText = ['مستلم', 'جاري التحضير', 'جاري التغليف', 'خرج للتوصيل', 'قريب من الوصول', 'تم التسليم'][status] || 'مستلم';
+            document.getElementById('banner-status-text').textContent = '• ' + statusText;
+        }
+
+        // فتح مودال التتبع من البانر
+        window.openTrackingFromBanner = function() {
+            const active = getActiveOrder();
+            if (!active) return;
+            // فتح مودال التتبع مباشرة
+            document.getElementById('order-modal').classList.remove('hidden');
+            document.getElementById('step-client-data').classList.add('hidden');
+            document.getElementById('step-review-order').classList.add('hidden');
+            document.getElementById('step-tracking-order').classList.remove('hidden');
+            document.getElementById('track-order-id').textContent = active.id;
+            // نستمع للطلب في الخلفية (يتم بالفعل)
+        };
+
+        // إلغاء الطلب
+        window.cancelOrder = function() {
+            const active = getActiveOrder();
+            if (!active) return;
+            if (confirm('هل أنت متأكد من إلغاء الطلب؟')) {
+                const ref = database.ref('Orders/' + active.id);
+                ref.update({ orderStatus: -1, canceledAt: firebase.database.ServerValue.TIMESTAMP })
+                    .then(() => {
+                        clearActiveOrder();
+                        closeOrderModal();
+                        alert('✅ تم إلغاء الطلب بنجاح');
+                    })
+                    .catch(err => {
+                        alert('❌ فشل إلغاء الطلب: ' + err.message);
+                    });
+            }
+        };
+
+        // الاستماع للطلب النشط
+        function listenToActiveOrder(orderId) {
+            if (activeOrderListener) {
+                activeOrderListener(); // إلغاء الاستماع السابق
+                activeOrderListener = null;
+            }
+            const ref = database.ref('Orders/' + orderId);
+            const listener = ref.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    // الطلب غير موجود (ربما حُذف)
+                    clearActiveOrder();
+                    return;
+                }
+                const status = data.orderStatus;
+                if (status === undefined || status === null) return;
+                if (status === 5) {
+                    // تم التسليم، نزيل البانر بعد 3 ثوانٍ
+                    updateActiveOrderBanner(status);
+                    setTimeout(() => {
+                        clearActiveOrder();
+                    }, 3000);
+                } else if (status === -1) {
+                    // ملغي
+                    clearActiveOrder();
+                } else {
+                    showActiveOrderBanner(orderId, status);
+                }
+            });
+            activeOrderListener = () => ref.off('value', listener);
+        }
+
+        // التحقق من وجود طلب نشط عند تحميل الصفحة
+        function checkForActiveOrder() {
+            const active = getActiveOrder();
+            if (active) {
+                // نتحقق من وجود الطلب في قاعدة البيانات
+                const ref = database.ref('Orders/' + active.id);
+                ref.once('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (!data) {
+                        clearActiveOrder();
+                        return;
+                    }
+                    const status = data.orderStatus;
+                    if (status === 5 || status === -1) {
+                        clearActiveOrder();
+                        return;
+                    }
+                    // عرض البانر والاستماع
+                    showActiveOrderBanner(active.id, status);
+                    listenToActiveOrder(active.id);
+                    // إذا كان هناك طلب نشط، نمنع إنشاء طلب جديد (نعرض رسالة)
+                    // سيتم التحقق عند فتح السلة
+                });
+            }
+        }
+
+        // ============================================================
+        // FUNCTIONS
+        // ============================================================
+
+        // ----- LOAD PRODUCTS from Realtime Database -----
+        function loadProducts() {
+            return new Promise((resolve) => {
+                const ref = database.ref('Products');
+                ref.once('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        products = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                    } else {
+                        products = [...fallbackMenu];
+                    }
+                    resolve();
+                }).catch(() => {
+                    products = [...fallbackMenu];
+                    resolve();
+                });
+            });
+        }
+
+        // ----- RENDER CATEGORIES -----
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            const cats = ["الكل", ...new Set(products.map(p => p.category))];
+            container.innerHTML = cats.map(c => `
+                <button onclick="selectCategory('${c}')" class="cat-btn ${activeCategory === c ? 'active' : ''}">
+                    ${c}
+                </button>
+            `).join('');
+        }
+
+        window.selectCategory = function(cat) {
+            activeCategory = cat;
+            renderCategories();
+            renderProducts();
+        };
+
+        // ----- RENDER PRODUCTS -----
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            let data = [...products];
+            if (activeCategory !== "الكل") data = data.filter(p => p.category === activeCategory);
+            
+            const search = document.getElementById('search-input').value.trim();
+            if (search) data = data.filter(p => p.name.includes(search) || (p.desc && p.desc.includes(search)));
+
+            const sort = document.getElementById('sort-select').value;
+            if (sort === "price-asc") data.sort((a,b) => a.price - b.price);
+            if (sort === "price-desc") data.sort((a,b) => b.price - a.price);
+
+            if (!data.length) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 font-bold text-gray-400">لا توجد وجبات</div>`;
+                return;
+            }
+
+            grid.innerHTML = data.map((p, index) => {
+                const inCart = cart.find(i => i.id === p.id);
+                const qty = inCart ? inCart.qty : 0;
+                const aosDelay = index * 80;
+                return `
+                    <div class="card-white" data-aos="fade-up" data-aos-duration="600" data-aos-delay="${aosDelay}">
+                        ${p.isBestSeller ? '<span class="bg-red-primary text-white text-[10px] font-black px-3 py-1 rounded-full inline-block mb-2"><i class="fa-solid fa-fire ml-0.5"></i> الأكثر طلباً</span>' : ''}
+              <div class="w-full h-44 rounded-2xl overflow-hidden mb-3 bg-gray-100">
+    <img src="${p.image || 'https://picsum.photos/seed/default/300/200'}" 
+         alt="${p.name}" 
+         class="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+         loading="lazy"
+         onerror="this.src='https://picsum.photos/seed/error/300/200'">
+</div>
+                        <h4 class="card-title">${p.name}</h4>
+                        <p class="text-xs text-gray-400 font-medium line-clamp-2 h-8 mt-1">${p.desc || ''}</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                            <span class="card-price">${p.price} <span class="text-xs font-bold text-gray-400">جنيه</span></span>
+                            ${qty === 0 ? `
+                                <button onclick="addToCart('${p.id}')" class="btn-red text-sm px-4 py-2 rounded-xl shadow-md">إضافة</button>
+                            ` : `
+                                <div class="flex items-center gap-2 bg-gray-50 border border-red-100 rounded-xl px-2 py-1">
+                                    <button onclick="updateQty('${p.id}', -1)" class="w-7 h-7 bg-white border rounded-lg font-bold text-red-primary hover:bg-red-50">-</button>
+                                    <span class="font-black text-sm w-4 text-center">${qty}</span>
+                                    <button onclick="updateQty('${p.id}', 1)" class="w-7 h-7 bg-white border rounded-lg font-bold text-red-primary hover:bg-red-50">+</button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.filterProducts = function() { renderProducts(); };
+
+        // ----- CART FUNCTIONS -----
+        window.addToCart = function(id) {
+            // التحقق من وجود طلب نشط
+            const active = getActiveOrder();
+            if (active) {
+                alert('⚠️ لديك طلب نشط بالفعل. لا يمكنك إضافة منتجات جديدة حتى يتم تسليم الطلب الحالي أو إلغاؤه.');
+                return;
+            }
+            const item = products.find(p => p.id === id);
+            if (item) { cart.push({ ...item, qty: 1 }); updateUI(); }
+        };
+
+        window.updateQty = function(id, delta) {
+            const idx = cart.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                cart[idx].qty += delta;
+                if (cart[idx].qty <= 0) cart.splice(idx, 1);
+                updateUI();
+            }
+        };
+
+        // ----- FAKE DISCOUNT -----
+        window.applyFakeDiscount = function() {
+            fakeDiscountActive = !fakeDiscountActive;
+            const badge = document.getElementById('fake-discount-badge');
+            if (fakeDiscountActive) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+            updateUI();
+        };
+
+        function getSubtotal() {
+            return cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        }
+
+        function getFakeDiscountAmount() {
+            if (!fakeDiscountActive) return 0;
+            const sub = getSubtotal();
+            return Math.round(sub * 0.1);
+        }
+
+        function updateUI() {
+            renderProducts();
+            const subtotal = getSubtotal();
+            const shipping = subtotal > 0 ? 30 : 0;
+            const discount = getFakeDiscountAmount();
+            const final = subtotal + shipping - discount;
+
+            document.getElementById('summary-subtotal').innerText = `${subtotal} جنيه`;
+            document.getElementById('summary-shipping').innerText = `${shipping} جنيه`;
+            document.getElementById('summary-total').innerText = `${final} جنيه`;
+
+            const discountRow = document.getElementById('fake-discount-row');
+            const discountAmount = document.getElementById('fake-discount-amount');
+            if (discount > 0) {
+                discountRow.classList.remove('hidden');
+                discountAmount.innerText = `${discount} جنيه`;
+            } else {
+                discountRow.classList.add('hidden');
+            }
+
+            const badge = document.getElementById('cart-badge-count');
+            const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+            if (totalItems > 0) { badge.innerText = totalItems; badge.classList.remove('hidden'); }
+            else { badge.classList.add('hidden'); }
+
+            const container = document.getElementById('cart-items-container');
+            if (!cart.length) {
+                container.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-basket-shopping text-4xl mb-3 block opacity-40"></i>السلة فارغة</div>`;
+            } else {
+                container.innerHTML = cart.map(i => `
+                    <div class="flex justify-between items-center border-b border-red-50 pb-3">
+                        <div><p class="font-bold text-red-primary text-sm">${i.name}</p><p class="text-xs text-gray-400">${i.price} × ${i.qty}</p></div>
+                        <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+                            <button onclick="updateQty('${i.id}', -1)" class="w-6 h-6 bg-white rounded-lg font-bold text-red-primary">-</button>
+                            <span class="w-5 text-center font-bold">${i.qty}</span>
+                            <button onclick="updateQty('${i.id}', 1)" class="w-6 h-6 bg-white rounded-lg font-bold text-red-primary">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        window.toggleCart = function() {
+            document.getElementById('cart-drawer').classList.toggle('-translate-x-full');
+        };
+
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar-drawer').classList.toggle('translate-x-full');
+        };
+
+        // ----- GPS -----
+        window.getLocationAndFillAddress = function() {
+            if (!navigator.geolocation) {
+                alert("المتصفح لا يدعم خاصية الموقع.");
+                return;
+            }
+            const btn = event.target;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جارٍ التحديد';
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    document.getElementById('cust-lat').value = lat;
+                    document.getElementById('cust-lng').value = lng;
+                    
+                    const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                    document.getElementById('cust-location-link').value = mapLink;
+
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=ar`);
+                        const data = await res.json();
+                        if (data && data.display_name) {
+                            document.getElementById('cust-address-manual').value = data.display_name;
+                        } else {
+                            document.getElementById('cust-address-manual').value = mapLink;
+                        }
+                    } catch (error) {
+                        document.getElementById('cust-address-manual').value = mapLink;
+                    }
+
+                    btn.innerHTML = '<i class="fa-solid fa-check ml-1"></i> تم التحديد';
+                    setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-location-dot ml-1"></i> GPS'; btn.disabled = false; }, 2000);
+                },
+                (err) => {
+                    alert("يرجى تفعيل الموقع من إعدادات هاتفك أو متصفحك، ثم حاول مجدداً.");
+                    btn.innerHTML = '<i class="fa-solid fa-location-dot ml-1"></i> GPS';
+                    btn.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        };
+
+        // ----- CHECKOUT -----
+        window.openCheckoutStep = function() {
+            // التحقق من وجود طلب نشط
+            const active = getActiveOrder();
+            if (active) {
+                alert('⚠️ لديك طلب نشط بالفعل. يمكنك متابعة حالته من البانر أعلاه.');
+                return;
+            }
+            if (!cart.length) { alert("أضف وجبات أولاً!"); return; }
+            toggleCart();
+            document.getElementById('order-modal').classList.remove('hidden');
+            document.getElementById('step-client-data').classList.remove('hidden');
+            document.getElementById('step-review-order').classList.add('hidden');
+            document.getElementById('step-tracking-order').classList.add('hidden');
+        };
+
+        window.closeOrderModal = function() {
+            document.getElementById('order-modal').classList.add('hidden');
+            // إعادة تعيين الخطوات
+            document.getElementById('step-client-data').classList.remove('hidden');
+            document.getElementById('step-review-order').classList.add('hidden');
+            document.getElementById('step-tracking-order').classList.add('hidden');
+        };
+
+        window.goToReviewStep = function() {
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const address = document.getElementById('cust-address-manual').value.trim();
+            if (!name || !phone || !address) { alert("املأ جميع الحقول المطلوبة"); return; }
+
+            document.getElementById('rev-name').innerText = name;
+            document.getElementById('rev-phone').innerText = phone;
+            document.getElementById('rev-address').innerText = address;
+            document.getElementById('rev-location-link').innerText = document.getElementById('cust-location-link').value || 'لم يرسل';
+
+            const subtotal = getSubtotal();
+            const discount = getFakeDiscountAmount();
+            const total = subtotal + 30 - discount;
+            document.getElementById('rev-subtotal').innerText = `${subtotal} جنيه`;
+            document.getElementById('rev-total').innerText = `${total} جنيه`;
+
+            const discRow = document.getElementById('rev-fake-discount-row');
+            const discAmt = document.getElementById('rev-fake-discount-amount');
+            if (discount > 0) {
+                discRow.classList.remove('hidden');
+                discAmt.innerText = `${discount} جنيه`;
+            } else {
+                discRow.classList.add('hidden');
+            }
+
+            document.getElementById('rev-items-list').innerHTML = cart.map(i =>
+                `<div class="flex justify-between text-xs bg-red-light p-2 rounded-xl"><span>${i.name} (×${i.qty})</span><span>${i.price * i.qty} جنيه</span></div>`
+            ).join('');
+
+            document.getElementById('step-client-data').classList.add('hidden');
+            document.getElementById('step-review-order').classList.remove('hidden');
+        };
+
+        window.backToClientData = function() {
+            document.getElementById('step-review-order').classList.add('hidden');
+            document.getElementById('step-client-data').classList.remove('hidden');
+        };
+
+        // ----- SUBMIT ORDER (Realtime Database) -----
+        window.submitOrderToFirebase = async function() {
+            // التحقق مرة أخرى من وجود طلب نشط (تأمين)
+            const active = getActiveOrder();
+            if (active) {
+                alert('⚠️ لديك طلب نشط بالفعل. لا يمكنك إنشاء طلب جديد.');
+                return;
+            }
+
+            const btn = document.getElementById('submit-order-final-btn');
+            btn.innerText = "جاري الإرسال...";
+            btn.disabled = true;
+
+            const phone = document.getElementById('cust-phone').value.trim();
+            const subtotal = getSubtotal();
+            const discount = getFakeDiscountAmount();
+            const total = subtotal + 30 - discount;
+
+            const payload = {
+                customerName: document.getElementById('cust-name').value.trim(),
+                phone: phone,
+                address: document.getElementById('cust-address-manual').value.trim(),
+                locationLink: document.getElementById('cust-location-link').value || '',
+                lat: document.getElementById('cust-lat').value || null,
+                lng: document.getElementById('cust-lng').value || null,
+                notes: document.getElementById('cust-notes').value.trim(),
+                subtotal, delivery: 30, discountApplied: discount, total,
+                orderTime: firebase.database.ServerValue.TIMESTAMP,
+                orderStatus: 0,
+                items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }))
+            };
+
+            try {
+                const newRef = database.ref('Orders').push();
+                await newRef.set(payload);
+                const orderId = newRef.key;
+                // حفظ الطلب في localStorage
+                saveActiveOrder(orderId, phone);
+                // بدء التتبع
+                startTracking(orderId);
+                // تفريغ السلة
+                cart = [];
+                fakeDiscountActive = false;
+                document.getElementById('fake-discount-badge').classList.add('hidden');
+                updateUI();
+                // عرض البانر
+                showActiveOrderBanner(orderId, 0);
+                // الاستماع للتحديثات
+                listenToActiveOrder(orderId);
+                // إغلاق خطوة المراجعة
+                document.getElementById('step-review-order').classList.add('hidden');
+                document.getElementById('step-tracking-order').classList.remove('hidden');
+                document.getElementById('track-order-id').textContent = orderId;
+            } catch (error) {
+                console.error("Error submitting order:", error);
+                alert('❌ حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.');
+            } finally {
+                btn.innerText = "تأكيد الإرسال";
+                btn.disabled = false;
+            }
+        };
+
+        // ----- TRACKING -----
+       // ============================================================
+// دالة بدء التتبع مع معالجة الأخطاء
+// ============================================================
+function startTracking(orderId, mock = false) {
+    try {
+        // إذا كان هناك استماع سابق، نلغيه بأمان
+        if (activeOrderListener) {
+            try {
+                activeOrderListener(); // إلغاء المستمع
+            } catch (e) {
+                console.warn('⚠️ فشل إلغاء المستمع السابق:', e);
+            }
+            activeOrderListener = null;
+        }
+        
+        // التأكد من وجود عناصر HTML قبل التعديل
+        const reviewStep = document.getElementById('step-review-order');
+        const trackingStep = document.getElementById('step-tracking-order');
+        const trackId = document.getElementById('track-order-id');
+        
+        if (!reviewStep || !trackingStep || !trackId) {
+            console.error('❌ بعض عناصر مودال التتبع غير موجودة في الصفحة');
+            return;
+        }
+        
+        // إظهار شاشة التتبع وإخفاء باقي الخطوات
+        reviewStep.classList.add('hidden');
+        trackingStep.classList.remove('hidden');
+        trackId.textContent = orderId || '---';
+        
+        if (!mock) {
+            if (!orderId) {
+                console.error('❌ معرف الطلب غير صالح للتتبع');
+                return;
+            }
+            
+            const ref = database.ref('Orders/' + orderId);
+            const listener = ref.on('value', (snapshot) => {
+                try {
+                    const data = snapshot.val();
+                    if (data && data.orderStatus !== undefined) {
+                        const status = data.orderStatus;
+                        updateStatus(status); // تحديث الواجهة
+                        
+                        // إذا كانت الحالة 5 (تم التسليم) أو -1 (ملغي)
+                        if (status === 5 || status === -1) {
+                            setTimeout(() => {
+                                try {
+                                    clearActiveOrder();
+                                    if (status === 5) {
+                                        alert('✅ تم تسليم طلبك بنجاح! شكراً لك.');
+                                    }
+                                } catch (e) {
+                                    console.warn('⚠️ خطأ أثناء تنظيف الطلب:', e);
+                                }
+                            }, 2000);
+                        }
+                    } else {
+                        console.warn('⚠️ البيانات المستلمة من Firebase غير مكتملة:', data);
+                    }
+                } catch (err) {
+                    console.error('❌ خطأ في معالجة بيانات الطلب:', err);
+                }
+            }, (error) => {
+                // معالجة خطأ القراءة من قاعدة البيانات
+                console.error('❌ فشل الاستماع للطلب:', error);
+                alert('⚠️ حدث خطأ في الاتصال بقاعدة البيانات. حاول تحديث الصفحة.');
+            });
+            
+            // تخزين مرجع الإلغاء مع معالجة الأخطاء
+            activeOrderListener = () => {
+                try {
+                    ref.off('value', listener);
+                } catch (e) {
+                    console.warn('⚠️ فشل إلغاء المستمع:', e);
+                }
+            };
+        } else {
+            // وضع المحاكاة (mock) للتجربة
+            let s = 0;
+            const interval = setInterval(() => {
+                try {
+                    s++;
+                    if (s <= 5) {
+                        updateStatus(s);
+                    } else {
+                        clearInterval(interval);
+                    }
+                } catch (e) {
+                    console.error('❌ خطأ في محاكاة التتبع:', e);
+                    clearInterval(interval);
+                }
+            }, 5000);
+        }
+    } catch (error) {
+        console.error('❌ خطأ غير متوقع في startTracking:', error);
+        alert('⚠️ حدث خطأ أثناء بدء تتبع الطلب. حاول مرة أخرى.');
+    }
+}
+
+// ============================================================
+// دالة تحديث حالة الخطوات مع معالجة الأخطاء
+// ============================================================
+function updateStatus(code) {
+    try {
+        // التأكد من أن الكود رقم صحيح بين 0 و 5
+        if (typeof code !== 'number' || code < 0 || code > 5) {
+            console.warn('⚠️ كود حالة غير صالح:', code);
+            return;
+        }
+        
+        for (let i = 0; i <= 5; i++) {
+            const el = document.getElementById(`status-step-${i}`);
+            if (!el) {
+                // قد تكون بعض العناصر غير موجودة في الصفحة (مثلاً إذا تم تغيير الـ HTML)
+                continue;
+            }
+            // افتراض أن العنصر يحتوي على عنصر فرعي واحد هو النقطة (الدائرة)
+            const dot = el.children[0];
+            if (!dot) {
+                console.warn(`⚠️ العنصر status-step-${i} لا يحتوي على نقطة داخلية`);
+                continue;
+            }
+            
+            if (i <= code) {
+                // الخطوة مكتملة أو هي الحالية
+                el.className = `relative pr-8 ${i === code ? 'text-red-primary font-black text-base animate-pulse' : 'text-green-600 font-bold'}`;
+                dot.className = `absolute right-0 top-1 w-5 h-5 rounded-full ${i === code ? 'bg-red-primary border-4 border-white shadow' : 'bg-green-500 border-4 border-white'}`;
+            } else {
+                // الخطوة لم تصل بعد
+                el.className = "relative pr-8 text-gray-400 font-bold";
+                dot.className = "absolute right-0 top-1 w-5 h-5 rounded-full bg-gray-200 border-4 border-white";
+            }
+        }
+        
+        // تحديث البانر العلوي إذا كان موجوداً
+        try {
+            const active = getActiveOrder();
+            if (active) {
+                updateActiveOrderBanner(code);
+            }
+        } catch (e) {
+            console.warn('⚠️ فشل تحديث البانر العلوي:', e);
+        }
+    } catch (error) {
+        console.error('❌ خطأ في updateStatus:', error);
+    }
+}
+
+// ============================================================
+// دالة resetCart مع معالجة الأخطاء
+// ============================================================
+window.resetCart = function() {
+    try {
+        cart = [];
+        fakeDiscountActive = false;
+        const badge = document.getElementById('fake-discount-badge');
+        if (badge) {
+            badge.classList.add('hidden');
+        } else {
+            console.warn('⚠️ عنصر fake-discount-badge غير موجود');
+        }
+        updateUI(); // هذه الدالة يجب أن تكون موجودة أيضاً
+    } catch (error) {
+        console.error('❌ خطأ في resetCart:', error);
+    }
+};
+        // ============================================================
+        // INIT
+        // ============================================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadProducts();
+            renderCategories();
+            renderProducts();
+
+            // التحقق من وجود طلب نشط
+            checkForActiveOrder();
+
+            AOS.init({
+                duration: 800,
+                once: false,
+                offset: 80,
+            });
+
+            // Hide loader
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 700);
+        });
+    </script>
+</body>
+  </html>
